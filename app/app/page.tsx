@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-24">
@@ -11,7 +13,10 @@ export default function Home() {
       </div>
 
       <div className="mt-12 grid text-center lg:mb-0 lg:grid-cols-2 lg:text-left g:max-w-5xl w-full gap-4">
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
+        <Link
+          href="/dashboard"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+        >
           <h2 className={`mb-3 text-2xl font-semibold`}>
             Admin Portal{" "}
             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
@@ -21,9 +26,12 @@ export default function Home() {
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
             Manage borrowers, loans, and view financial analytics.
           </p>
-        </div>
+        </Link>
 
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
+        <Link
+          href="/login"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+        >
           <h2 className={`mb-3 text-2xl font-semibold`}>
             Collector App{" "}
             <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
@@ -33,7 +41,7 @@ export default function Home() {
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
             Mobile interface for field collection and receipts.
           </p>
-        </div>
+        </Link>
       </div>
     </div>
   );
