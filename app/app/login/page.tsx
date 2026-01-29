@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { MotionContainer } from "@/components/motion-container";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -47,7 +48,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <MotionContainer className="flex min-h-screen items-center justify-center bg-background px-4">
             <div className="w-full max-w-md space-y-8 rounded-2xl bg-card p-8 border border-border shadow-xl ring-1 ring-black/5 dark:ring-white/10">
                 <div className="text-center">
                     <h1 className="text-3xl font-bold tracking-tight text-primary">Stratos</h1>
@@ -113,6 +114,6 @@ export default function LoginPage() {
                     Use your assigned credentials to access the system.
                 </p>
             </div>
-        </div>
+        </MotionContainer>
     );
 }

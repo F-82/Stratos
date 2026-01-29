@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, MapPin, ChevronRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { MotionContainer } from "@/components/motion-container";
 
 interface Borrower {
     id: string;
@@ -53,7 +54,7 @@ export default function CollectorHomePage() {
     }, [search, borrowers]);
 
     return (
-        <div className="space-y-4">
+        <MotionContainer className="space-y-4">
             <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -90,6 +91,6 @@ export default function CollectorHomePage() {
                     ))
                 )}
             </div>
-        </div>
+        </MotionContainer>
     );
 }

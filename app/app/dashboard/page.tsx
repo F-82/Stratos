@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, Users, CreditCard, DollarSign, Activity } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { MotionContainer } from "@/components/motion-container";
 
 const data = [
     { name: "Jan", total: 15000 },
@@ -15,7 +16,7 @@ const data = [
 
 export default function DashboardPage() {
     return (
-        <div className="space-y-6">
+        <MotionContainer className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight text-primary">Overview</h2>
             </div>
@@ -161,6 +162,6 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-        </div>
+        </MotionContainer>
     );
 }
