@@ -61,6 +61,31 @@ export default function CreateLoanPage() {
         const plan = plans.find(p => p.id.toString() === selectedPlanId);
         if (!plan) return;
 
+        // Check 1: Active Loan Constraint
+        const { data: activeLoans } = await supabase
+            .from("loans")
+            .select("id")
+            .eq("borrower_id", selectedBorrowerId)
+            .eq("status", "active");
+
+        if (activeLoans && activeLoans.length > 0) {
+            setError("Borrower already has an active loan. They must complete it before taking a new one.");
+            setLoading(false);
+            return;
+        }
+
+        // Check 2: First-Time Borrower Limit (Max 20,000)
+        const { count: totalLoans } = await supabase
+            .from("loans")
+            .select("id", { count: 'exact', head: true })
+            .eq("borrower_id", selectedBorrowerId);
+
+        if (totalLoans === 0 && plan.principal_amount > 20000) {
+            setError("First-time borrowers are limited to loans of LKR 20,000 maximum.");
+            setLoading(false);
+            return;
+        }
+
         const startDate = new Date();
         const endDate = addMonths(startDate, plan.duration_months);
 
