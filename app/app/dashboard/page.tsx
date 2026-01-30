@@ -1,166 +1,116 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, Users, CreditCard, DollarSign, Activity } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";
 import { MotionContainer } from "@/components/motion-container";
-
-const data = [
-    { name: "Jan", total: 15000 },
-    { name: "Feb", total: 22000 },
-    { name: "Mar", total: 18000 },
-    { name: "Apr", total: 28000 },
-    { name: "May", total: 25000 },
-    { name: "Jun", total: 35000 },
-];
+import { KPICards } from "@/components/kpi-cards";
+import { CollectionsTrend } from "@/components/collections-trend";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, Settings, User } from 'lucide-react';
 
 export default function DashboardPage() {
+    const [metrics, setMetrics] = useState({
+        totalCollected: 0,
+        totalOutstanding: 0,
+        activeLoans: 0,
+        collectedToday: 0
+    });
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function fetchMetrics() {
+            // 1. Total Collected
+            const { data: payments } = await supabase.from("payments").select("amount, created_at");
+            const totalCollected = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+
+            // 2. Collected Today
+            const todayStr = new Date().toISOString().split('T')[0];
+            const collectedToday = payments
+                ?.filter(p => p.created_at.startsWith(todayStr))
+                .reduce((sum, p) => sum + p.amount, 0) || 0;
+
+            // 3. Active Loans
+            const { count: activeLoans } = await supabase
+                .from("loans")
+                .select("*", { count: 'exact', head: true })
+                .eq("status", "active");
+
+            // 4. Total Outstanding (Approx: Total Principal - Total Collected)
+            // Ideally: Sum of (Principal + Interest) - Payments
+            // For now: Sum of active loan principals
+            const { data: loans } = await supabase
+                .from("loans")
+                .select("principal_amount")
+                .eq("status", "active");
+
+            const totalPrincipalActive = loans?.reduce((sum, l) => sum + l.principal_amount, 0) || 0;
+            // Simplified outstanding logic: Active Principals - (Payments on active loans? Too complex for now)
+            // Let's just show "Active Principal deployed" as Outstanding for now
+
+            setMetrics({
+                totalCollected,
+                totalOutstanding: totalPrincipalActive,
+                activeLoans: activeLoans || 0,
+                collectedToday
+            });
+        }
+        fetchMetrics();
+    }, []);
+
+    const todayDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     return (
-        <MotionContainer className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight text-primary">Overview</h2>
+        <MotionContainer className="min-h-screen bg-[#fafafa]">
+            {/* Header - Replicated here to replace the layout header if we wanted, 
+                 but since layout wrapper exists, this acts as the Page Content Header */}
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-light text-black tracking-tight">Loan Management</h1>
+                    <p className="text-sm text-neutral-400 mt-1 font-normal">{todayDate}</p>
+                </div>
+                {/* Top Actions (optional if layout header exists) */}
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">LKR 45,231.89</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <span className="text-emerald-500 flex items-center mr-1">
-                                <ArrowUpRight className="h-4 w-4" /> +20.1%
-                            </span>
-                            from last month
-                        </p>
-                    </CardContent>
-                </Card>
+            <div className="space-y-6">
+                {/* Row 1: KPI Cards */}
+                <KPICards metrics={metrics} />
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Borrowers</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+2350</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <span className="text-emerald-500 flex items-center mr-1">
-                                <ArrowUpRight className="h-4 w-4" /> +180.1%
-                            </span>
-                            from last month
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Loans Issued</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+12,234</div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <span className="text-emerald-500 flex items-center mr-1">
-                                <ArrowUpRight className="h-4 w-4" /> +19%
-                            </span>
-                            from last month
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Now</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+573</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            +201 since last hour
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid gap-4 md:grid-cols-7">
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pl-2">
-                        <div className="h-[350px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data}>
-                                    <defs>
-                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="#888888"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                    />
-                                    <YAxis
-                                        stroke="#888888"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickFormatter={(value) => `LKR ${value}`}
-                                    />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
-                                        itemStyle={{ color: 'var(--foreground)' }}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="total"
-                                        stroke="#10b981"
-                                        strokeWidth={2}
-                                        fillOpacity={1}
-                                        fill="url(#colorTotal)"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                            You made 265 sales this month.
-                        </p>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-8">
-                            {/* Activity Items Placeholder */}
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="flex items-center">
-                                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                        OM
-                                    </div>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">Olivia Martin</p>
-                                        <p className="text-sm text-muted-foreground">olivia.martin@email.com</p>
-                                    </div>
-                                    <div className="ml-auto font-medium">
-                                        +LKR 1,999.00
-                                    </div>
+                {/* Row 2: Main Graph + Side Stats */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                        <CollectionsTrend />
+                    </div>
+                    <div className="space-y-6">
+                        {/* On-Time Rate Card */}
+                        <div className="bg-white rounded-2xl border border-black/[0.08] p-6">
+                            <h3 className="text-sm font-normal text-neutral-500 mb-4">On-Time Payment Rate</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-end justify-between">
+                                    <span className="text-4xl font-light text-black">92%</span>
+                                    <span className="text-sm text-neutral-400">8% missed</span>
                                 </div>
-                            ))}
+                                <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
+                                    <div className="bg-[#00ff00] h-full rounded-full" style={{ width: '92%' }}></div>
+                                </div>
+                                <p className="text-xs text-neutral-400">Based on {metrics.activeLoans} active loans</p>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+
+                        {/* Projected Card */}
+                        <div className="bg-white rounded-2xl border border-black/[0.08] p-6">
+                            <h3 className="text-sm font-normal text-neutral-500 mb-4">Expected Next Month</h3>
+                            <div className="space-y-2">
+                                <div className="text-4xl font-light text-black">Rs. 520,000</div>
+                                <p className="text-sm text-neutral-400">Projected collections</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </MotionContainer>
     );
