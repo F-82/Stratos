@@ -82,6 +82,22 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             setSuccessMsg(`Collected Installment #${currentInstallmentNumber} successfully!`);
             setLastPayment(data);
             setPaidCount(prev => prev + 1); // Increment locally to update UI
+
+            // Check if this was the last payment
+            const totalSegments = selectedLoan.plan.duration_months;
+            if (currentInstallmentNumber >= totalSegments) {
+                const { error: updateError } = await supabase
+                    .from("loans")
+                    .update({ status: "completed" })
+                    .eq("id", selectedLoan.id);
+
+                if (updateError) {
+                    console.error("Failed to update loan status:", updateError);
+                    alert("Payment collected, but failed to mark loan as completed. Please contact admin.");
+                } else {
+                    setSuccessMsg(`LOAN FULLY REPAID! Collected final installment #${currentInstallmentNumber}.`);
+                }
+            }
         }
         setLoading(false);
     };
@@ -220,18 +236,21 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                         </div>
                     </div>
 
-                    <Card className="bg-primary/5 border-primary/20">
-                        <CardHeader className="pb-2 text-center">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Next Installment (#{paidCount + 1})
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <div className="text-4xl font-bold text-primary">
-                                LKR {selectedLoan.plan?.installment_amount.toLocaleString()}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Hide Next Installment card if loan is fully paid */}
+                    {paidCount < totalSegments && (
+                        <Card className="bg-primary/5 border-primary/20">
+                            <CardHeader className="pb-2 text-center">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Next Installment (#{paidCount + 1})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-center">
+                                <div className="text-4xl font-bold text-primary">
+                                    LKR {selectedLoan.plan?.installment_amount.toLocaleString()}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardContent className="pt-6">
@@ -245,9 +264,19 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                                         <Button onClick={generateReceipt} variant="outline" className="w-full gap-2">
                                             <Printer className="h-4 w-4" /> Download Receipt
                                         </Button>
-                                        <Button onClick={() => setSuccessMsg(null)} variant="ghost" className="w-full gap-2">
-                                            <RefreshCcw className="h-4 w-4" /> Collect Another
-                                        </Button>
+
+                                        {/* Only show "Collect Another" if loan is NOT finished */}
+                                        {paidCount < totalSegments ? (
+                                            <Button onClick={() => setSuccessMsg(null)} variant="ghost" className="w-full gap-2">
+                                                <RefreshCcw className="h-4 w-4" /> Collect Another
+                                            </Button>
+                                        ) : (
+                                            <Link href="/collector" className="w-full">
+                                                <Button variant="default" className="w-full gap-2">
+                                                    <ArrowLeft className="h-4 w-4" /> Return to List
+                                                </Button>
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
