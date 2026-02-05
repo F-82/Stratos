@@ -15,7 +15,7 @@ interface KPICardProps {
 
 function KPICard({ title, value, change, changeType, icon, iconBg, subtitle, alert }: KPICardProps) {
     return (
-        <div className={`bg-card rounded-2xl border ${alert ? 'border-cyan/30 shadow-card' : 'border-border/50'} p-6 hover:border-cyan/40 transition-smooth hover-lift shadow-soft`}>
+        <div className={`bg-card rounded-2xl border ${alert ? 'border-light-blue/30 shadow-card' : 'border-border/50'} p-6 hover:border-light-blue/40 transition-smooth hover-lift shadow-soft`}>
             <div className="flex items-start justify-between mb-4">
                 <div className={`${iconBg} p-3 rounded-xl shadow-soft`}>
                     {icon}
@@ -63,16 +63,16 @@ export function KPICards({ metrics }: { metrics: any }) {
             <KPICard
                 title="Outstanding"
                 value={fmt(metrics.totalOutstanding)}
-                icon={<Wallet className="w-5 h-5 text-blue" strokeWidth={2} />}
-                iconBg="bg-gradient-to-br from-cyan/20 to-blue/10"
+                icon={<Wallet className="w-5 h-5 text-medium-blue" strokeWidth={2} />}
+                iconBg="bg-gradient-to-br from-light-blue/30 to-medium-blue/10"
                 subtitle="Principal still in field"
             />
 
             <KPICard
                 title="Active Loans"
                 value={metrics.activeLoans.toString()}
-                icon={<Users className="w-5 h-5 text-blue-deep" strokeWidth={2} />}
-                iconBg="bg-gradient-to-br from-blue/20 to-blue-deep/10"
+                icon={<Users className="w-5 h-5 text-deep-blue" strokeWidth={2} />}
+                iconBg="bg-gradient-to-br from-medium-blue/30 to-deep-blue/10"
                 subtitle="Borrowers with active status"
             />
 
@@ -80,8 +80,8 @@ export function KPICards({ metrics }: { metrics: any }) {
                 title="Collected Today"
                 value={fmt(metrics.collectedToday)}
                 changeType="neutral"
-                icon={<Calendar className="w-5 h-5 text-cyan" strokeWidth={2} />}
-                iconBg="bg-gradient-to-br from-cyan/30 to-cyan/10"
+                icon={<Calendar className="w-5 h-5 text-light-blue" strokeWidth={2} />}
+                iconBg="bg-gradient-to-br from-light-blue/40 to-light-blue/10"
                 subtitle={new Date().toLocaleDateString()}
             />
         </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gradient-hero p-6 md:p-24">
+    <div className="flex min-h-screen flex-col items-center justify-center gradient-hero-dark p-6 md:p-24 relative overflow-hidden">
       {/* Hero Section */}
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         {/* Logo/Brand */}
@@ -37,11 +37,11 @@ export default function Home() {
           {/* Admin Portal Card */}
           <Link
             href="/dashboard"
-            className="group relative overflow-hidden rounded-3xl p-8 transition-smooth hover-lift glass-strong shadow-card"
+            className="group relative overflow-hidden rounded-3xl p-8 transition-smooth hover-lift glass-dark-strong shadow-deep hover-glow"
           >
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20">
                   <svg 
                     width="24" 
                     height="24" 
@@ -89,11 +89,11 @@ export default function Home() {
           {/* Collector App Card */}
           <Link
             href="/login"
-            className="group relative overflow-hidden rounded-3xl p-8 transition-smooth hover-lift glass-strong shadow-card"
+            className="group relative overflow-hidden rounded-3xl p-8 transition-smooth hover-lift glass-dark-strong shadow-deep hover-glow"
           >
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20">
                   <svg 
                     width="24" 
                     height="24" 
@@ -141,7 +141,7 @@ export default function Home() {
 
         {/* Footer Info */}
         <div className="text-center mt-16">
-          <p className="text-white/60 text-sm font-light">
+          <p className="text-white/50 text-sm font-light">
             Microfinance Collection System for Synetica
           </p>
         </div>
@@ -149,8 +149,8 @@ export default function Home() {
 
       {/* Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-cyan/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-light-blue/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-medium-blue/5 rounded-full blur-3xl" />
       </div>
     </div>
   );

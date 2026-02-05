@@ -8,7 +8,7 @@ export function Header({ user }: { user: any }) {
             <div className="flex items-center gap-4">
                 {/* User Profile */}
                 <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 shadow-soft">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan to-blue flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-light-blue to-medium-blue flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                         {user.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
                     <div className="text-sm">

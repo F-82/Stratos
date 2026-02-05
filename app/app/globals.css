@@ -39,40 +39,36 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-cyan-light: var(--cyan-light);
-  --color-cyan: var(--cyan);
-  --color-blue: var(--blue);
-  --color-blue-deep: var(--blue-deep);
-  --color-navy: var(--navy);
-  --color-navy-dark: var(--navy-dark);
+  --color-dark-navy: var(--dark-navy);
+  --color-deep-blue: var(--deep-blue);
+  --color-medium-blue: var(--medium-blue);
+  --color-light-blue: var(--light-blue);
 }
 
 :root {
   --font-size: 16px;
   
-  /* Modern Banking Color Palette */
-  --cyan-light: #B8E8F5;
-  --cyan: #7DD3E8;
-  --blue: #5B8FB9;
-  --blue-deep: #3D5A80;
-  --navy: #1A2332;
-  --navy-dark: #0F1419;
+  /* New Darker Gradient Color Palette */
+  --dark-navy: #0E1011;
+  --deep-blue: #01084D;
+  --medium-blue: #498DBA;
+  --light-blue: #8EC3DC;
   
   /* Light Mode Colors */
   --background: #FAFAFA;
-  --foreground: #0F1419;
+  --foreground: #0E1011;
   --card: #FFFFFF;
-  --card-foreground: #0F1419;
+  --card-foreground: #0E1011;
   --popover: #FFFFFF;
-  --popover-foreground: #0F1419;
-  --primary: #5B8FB9;
+  --popover-foreground: #0E1011;
+  --primary: #498DBA;
   --primary-foreground: #FFFFFF;
   --secondary: #F8F9FA;
-  --secondary-foreground: #0F1419;
+  --secondary-foreground: #0E1011;
   --muted: #F8F9FA;
   --muted-foreground: #6B7280;
-  --accent: #7DD3E8;
-  --accent-foreground: #0F1419;
+  --accent: #8EC3DC;
+  --accent-foreground: #0E1011;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
   --border: rgba(0, 0, 0, 0.08);
@@ -81,57 +77,57 @@
   --switch-background: #E5E7EB;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: rgba(93, 143, 185, 0.3);
-  --chart-1: #7DD3E8;
-  --chart-2: #5B8FB9;
-  --chart-3: #3D5A80;
-  --chart-4: #B8E8F5;
-  --chart-5: #1A2332;
+  --ring: rgba(73, 141, 186, 0.3);
+  --chart-1: #8EC3DC;
+  --chart-2: #498DBA;
+  --chart-3: #01084D;
+  --chart-4: #0E1011;
+  --chart-5: #6DD5ED;
   --radius: 1rem;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F1419;
-  --sidebar-primary: #5B8FB9;
+  --sidebar-foreground: #0E1011;
+  --sidebar-primary: #498DBA;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F8F9FA;
-  --sidebar-accent-foreground: #0F1419;
+  --sidebar-accent-foreground: #0E1011;
   --sidebar-border: rgba(0, 0, 0, 0.08);
-  --sidebar-ring: rgba(93, 143, 185, 0.3);
+  --sidebar-ring: rgba(73, 141, 186, 0.3);
 }
 
 .dark {
-  --background: #0F1419;
+  --background: #0E1011;
   --foreground: #FFFFFF;
-  --card: #1A2332;
+  --card: #1A1F20;
   --card-foreground: #FFFFFF;
-  --popover: #1A2332;
+  --popover: #1A1F20;
   --popover-foreground: #FFFFFF;
-  --primary: #7DD3E8;
-  --primary-foreground: #0F1419;
+  --primary: #8EC3DC;
+  --primary-foreground: #0E1011;
   --secondary: #2A3441;
   --secondary-foreground: #FFFFFF;
   --muted: #2A3441;
   --muted-foreground: #9CA3AF;
-  --accent: #5B8FB9;
+  --accent: #498DBA;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
   --input-background: rgba(255, 255, 255, 0.05);
-  --ring: rgba(125, 211, 232, 0.3);
-  --chart-1: #7DD3E8;
-  --chart-2: #5B8FB9;
-  --chart-3: #3D5A80;
-  --chart-4: #B8E8F5;
-  --chart-5: #1A2332;
-  --sidebar: #1A2332;
+  --ring: rgba(142, 195, 220, 0.3);
+  --chart-1: #8EC3DC;
+  --chart-2: #498DBA;
+  --chart-3: #01084D;
+  --chart-4: #0E1011;
+  --chart-5: #6DD5ED;
+  --sidebar: #1A1F20;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #7DD3E8;
-  --sidebar-primary-foreground: #0F1419;
+  --sidebar-primary: #8EC3DC;
+  --sidebar-primary-foreground: #0E1011;
   --sidebar-accent: #2A3441;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: rgba(125, 211, 232, 0.3);
+  --sidebar-ring: rgba(142, 195, 220, 0.3);
 }
 
 @layer base {
@@ -147,57 +143,81 @@
   }
 }
 
-/* Gradient Backgrounds */
-.gradient-hero {
+@layer utilities {
+
+/* Main Gradient with Noise Texture */
+.gradient-hero-dark {
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #8EC3DC 0%, #498DBA 35%, #01084D 70%, #0E1011 100%);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Alternative gradient without noise for testing */
+.gradient-hero-dark-simple {
   background: linear-gradient(
     180deg,
-    #B8E8F5 0%,
-    #7DD3E8 20%,
-    #5B8FB9 40%,
-    #3D5A80 60%,
-    #1A2332 80%,
-    #0F1419 100%
+    #8EC3DC 0%,
+    #498DBA 35%,
+    #01084D 70%,
+    #0E1011 100%
   );
 }
 
-.gradient-hero-alt {
-  background: linear-gradient(
-    180deg,
-    #A8D8EA 0%,
-    #6DD5ED 30%,
-    #2E5090 70%,
-    #0A0E14 100%
-  );
+/* Reversed gradient (dark to light from top to bottom) */
+.gradient-hero-dark-reverse {
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #0E1011 0%, #01084D 30%, #498DBA 65%, #8EC3DC 100%);
+  background-size: cover;
+  background-attachment: fixed;
 }
 
-.gradient-card {
+/* Card gradient for subtle backgrounds */
+.gradient-card-dark {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(142, 195, 220, 0.1) 0%,
+    rgba(73, 141, 186, 0.05) 100%
   );
 }
 
-/* Glassmorphism Effects */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
+/* Glassmorphism Effects for Dark Backgrounds */
+.glass-dark {
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-dark-strong {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.glass-strong {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.glass-dark {
-  background: rgba(0, 0, 0, 0.3);
+.glass-dark-subtle {
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light glassmorphism for light backgrounds */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 /* Premium Shadows */
@@ -217,6 +237,10 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
+.shadow-glow {
+  box-shadow: 0 0 40px rgba(142, 195, 220, 0.3);
+}
+
 /* Smooth Transitions */
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -231,6 +255,10 @@
   transform: translateY(-4px);
 }
 
+.hover-glow:hover {
+  box-shadow: 0 0 40px rgba(142, 195, 220, 0.4);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -243,12 +271,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(93, 143, 185, 0.3);
+  background: rgba(73, 141, 186, 0.3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(93, 143, 185, 0.5);
+  background: rgba(73, 141, 186, 0.5);
 }
 
 /* Typography Utilities */
@@ -274,4 +302,24 @@
   .text-display {
     font-size: 2.5rem;
   }
+}
+
+}
+
+/* Noise texture animation (optional) */
+@keyframes noise {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(-10%, 5%); }
+  60% { transform: translate(15%, 0); }
+  70% { transform: translate(0, 10%); }
+  80% { transform: translate(-15%, 0); }
+  90% { transform: translate(10%, 5%); }
+}
+
+.noise-animate::before {
+  animation: noise 8s steps(10) infinite;
 }

@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { MotionContainer } from "@/components/motion-container";
 import { KPICards } from "@/components/kpi-cards";
 import { CollectionsTrend } from "@/components/collections-trend";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Settings, User } from 'lucide-react';
 
 export default function DashboardPage() {
     const [metrics, setMetrics] = useState({
@@ -106,8 +104,8 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Projected Collections Card */}
-                        <div className="bg-gradient-to-br from-cyan/10 to-blue/10 rounded-2xl border border-cyan/20 p-6 shadow-soft hover-lift transition-smooth">
-                            <h3 className="text-sm font-medium text-blue-deep mb-6 uppercase tracking-wider">
+                        <div className="bg-gradient-to-br from-medium-blue/10 to-light-blue/10 rounded-2xl border border-medium-blue/20 p-6 shadow-soft hover-lift transition-smooth">
+                            <h3 className="text-sm font-medium text-medium-blue mb-6 uppercase tracking-wider">
                                 Expected Next Month
                             </h3>
                             <div className="space-y-3">

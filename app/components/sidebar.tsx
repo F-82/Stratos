@@ -30,7 +30,7 @@ export function Sidebar() {
             {/* Logo Section */}
             <div className="flex h-20 items-center px-6 border-b border-border/50">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan to-blue flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-light-blue to-medium-blue flex items-center justify-center shadow-sm">
                         <svg 
                             width="20" 
                             height="20" 
@@ -55,13 +55,13 @@ export function Sidebar() {
                             className={cn(
                                 "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-smooth",
                                 isActive
-                                    ? "bg-gradient-to-r from-cyan/20 to-blue/20 text-blue-deep shadow-soft border border-cyan/20"
+                                    ? "bg-gradient-to-r from-light-blue/20 to-medium-blue/20 text-medium-blue shadow-soft border border-light-blue/20"
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground hover-scale"
                             )}
                         >
                             <item.icon className={cn(
                                 "h-5 w-5 transition-colors",
-                                isActive ? "text-blue" : "text-muted-foreground"
+                                isActive ? "text-medium-blue" : "text-muted-foreground"
                             )} />
                             {item.label}
                         </Link>

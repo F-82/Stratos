@@ -30,10 +30,10 @@ export function CollectionsTrend() {
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                         <defs>
-                            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor="#7DD3E8" />
-                                <stop offset="50%" stopColor="#5B8FB9" />
-                                <stop offset="100%" stopColor="#3D5A80" />
+                            <linearGradient id="lineGradientDark" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#8EC3DC" />
+                                <stop offset="50%" stopColor="#498DBA" />
+                                <stop offset="100%" stopColor="#01084D" />
                             </linearGradient>
                         </defs>
                         <CartesianGrid 
@@ -59,7 +59,7 @@ export function CollectionsTrend() {
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: '#1A2332',
+                                backgroundColor: '#0E1011',
                                 border: 'none',
                                 borderRadius: '12px',
                                 color: '#fff',
@@ -69,22 +69,22 @@ export function CollectionsTrend() {
                                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
                             }}
                             formatter={(value: any) => [`Rs. ${value}K`, 'Collections']}
-                            labelStyle={{ color: '#B8E8F5', fontWeight: '600', marginBottom: '4px' }}
+                            labelStyle={{ color: '#8EC3DC', fontWeight: '600', marginBottom: '4px' }}
                         />
                         <Line
                             type="monotone"
                             dataKey="amount"
-                            stroke="url(#lineGradient)"
+                            stroke="url(#lineGradientDark)"
                             strokeWidth={3}
                             dot={{ 
-                                fill: '#5B8FB9', 
+                                fill: '#498DBA', 
                                 strokeWidth: 3, 
                                 stroke: '#fff',
                                 r: 5 
                             }}
                             activeDot={{ 
                                 r: 7, 
-                                fill: '#7DD3E8',
+                                fill: '#8EC3DC',
                                 stroke: '#fff',
                                 strokeWidth: 3
                             }}

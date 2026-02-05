@@ -48,11 +48,11 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center gradient-hero px-4 relative overflow-hidden">
+        <div className="flex min-h-screen items-center justify-center gradient-hero-dark px-4 relative overflow-hidden">
             {/* Decorative Background Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-96 h-96 bg-cyan/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue/10 rounded-full blur-3xl" />
+                <div className="absolute top-20 left-10 w-96 h-96 bg-light-blue/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-20 right-10 w-96 h-96 bg-medium-blue/5 rounded-full blur-3xl" />
             </div>
 
             <MotionContainer className="w-full max-w-md relative z-10">
@@ -78,7 +78,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="glass-strong rounded-3xl p-8 shadow-deep">
+                <div className="glass-dark-strong rounded-3xl p-8 shadow-deep">
                     <form className="space-y-6" onSubmit={handleLogin}>
                         <div className="space-y-4">
                             {/* Email Field */}
@@ -95,7 +95,7 @@ export default function LoginPage() {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    className="block w-full rounded-xl glass border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth"
+                                    className="block w-full rounded-xl bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth backdrop-blur-sm"
                                     placeholder="you@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -116,7 +116,7 @@ export default function LoginPage() {
                                     type="password"
                                     autoComplete="current-password"
                                     required
-                                    className="block w-full rounded-xl glass border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth"
+                                    className="block w-full rounded-xl bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth backdrop-blur-sm"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -150,7 +150,7 @@ export default function LoginPage() {
                             type="submit"
                             disabled={loading}
                             className={cn(
-                                "flex w-full justify-center items-center gap-2 rounded-full bg-white py-3.5 text-base font-semibold text-navy shadow-medium hover:shadow-deep hover-scale transition-smooth",
+                                "flex w-full justify-center items-center gap-2 rounded-full bg-white py-3.5 text-base font-semibold text-dark-navy shadow-medium hover:shadow-deep hover-scale transition-smooth",
                                 loading && "opacity-70 cursor-not-allowed"
                             )}
                         >
