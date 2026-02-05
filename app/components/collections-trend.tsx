@@ -14,14 +14,14 @@ const data = [
 
 export function CollectionsTrend() {
     return (
-        <div className="bg-white rounded-2xl border border-black/[0.08] p-6 h-full">
+        <div className="bg-card rounded-2xl border border-border/50 p-6 h-full shadow-soft hover-lift transition-smooth">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-xl font-light text-black tracking-tight">Collections Trend</h2>
-                    <p className="text-sm text-neutral-400 mt-1 font-normal">Last 6 months performance</p>
+                    <h2 className="text-2xl font-bold text-foreground tracking-tight">Collections Trend</h2>
+                    <p className="text-sm text-muted-foreground mt-2 font-normal">Last 6 months performance</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#00ff00]/10 rounded-lg text-sm font-normal text-black">
-                    <TrendingUp className="w-4 h-4" strokeWidth={1.5} />
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-50 rounded-xl text-sm font-semibold text-emerald-700 shadow-soft">
+                    <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
                     <span>+17.6%</span>
                 </div>
             </div>
@@ -29,39 +29,65 @@ export function CollectionsTrend() {
             <div className="w-full" style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
+                        <defs>
+                            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#7DD3E8" />
+                                <stop offset="50%" stopColor="#5B8FB9" />
+                                <stop offset="100%" stopColor="#3D5A80" />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid 
+                            strokeDasharray="3 3" 
+                            stroke="rgba(0, 0, 0, 0.06)" 
+                            vertical={false} 
+                        />
                         <XAxis
                             dataKey="month"
-                            stroke="#a3a3a3"
-                            style={{ fontSize: '11px', fontWeight: '400' }}
+                            stroke="#9CA3AF"
+                            style={{ fontSize: '12px', fontWeight: '500' }}
                             axisLine={false}
                             tickLine={false}
+                            dy={10}
                         />
                         <YAxis
-                            stroke="#a3a3a3"
-                            style={{ fontSize: '11px', fontWeight: '400' }}
+                            stroke="#9CA3AF"
+                            style={{ fontSize: '12px', fontWeight: '500' }}
                             tickFormatter={(value) => `${value}K`}
                             axisLine={false}
                             tickLine={false}
+                            dx={-10}
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: '#000000',
+                                backgroundColor: '#1A2332',
                                 border: 'none',
                                 borderRadius: '12px',
                                 color: '#fff',
-                                fontSize: '12px',
-                                fontWeight: '400'
+                                fontSize: '13px',
+                                fontWeight: '500',
+                                padding: '12px 16px',
+                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
                             }}
                             formatter={(value: any) => [`Rs. ${value}K`, 'Collections']}
+                            labelStyle={{ color: '#B8E8F5', fontWeight: '600', marginBottom: '4px' }}
                         />
                         <Line
                             type="monotone"
                             dataKey="amount"
-                            stroke="#00ff00"
-                            strokeWidth={2}
-                            dot={{ fill: '#00ff00', strokeWidth: 0, r: 3 }}
-                            activeDot={{ r: 5, fill: '#00ff00' }}
+                            stroke="url(#lineGradient)"
+                            strokeWidth={3}
+                            dot={{ 
+                                fill: '#5B8FB9', 
+                                strokeWidth: 3, 
+                                stroke: '#fff',
+                                r: 5 
+                            }}
+                            activeDot={{ 
+                                r: 7, 
+                                fill: '#7DD3E8',
+                                stroke: '#fff',
+                                strokeWidth: 3
+                            }}
                         />
                     </LineChart>
                 </ResponsiveContainer>

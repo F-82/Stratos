@@ -48,72 +48,147 @@ export default function LoginPage() {
     };
 
     return (
-        <MotionContainer className="flex min-h-screen items-center justify-center bg-background px-4">
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-card p-8 border border-border shadow-xl ring-1 ring-black/5 dark:ring-white/10">
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight text-primary">Stratos</h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
+        <div className="flex min-h-screen items-center justify-center gradient-hero px-4 relative overflow-hidden">
+            {/* Decorative Background Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-20 left-10 w-96 h-96 bg-cyan/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue/10 rounded-full blur-3xl" />
+            </div>
+
+            <MotionContainer className="w-full max-w-md relative z-10">
+                {/* Logo */}
+                <div className="text-center mb-8">
+                    <div className="inline-block mb-6">
+                        <svg 
+                            width="60" 
+                            height="60" 
+                            viewBox="0 0 100 100" 
+                            className="mx-auto"
+                        >
+                            <line x1="20" y1="50" x2="80" y2="50" stroke="white" strokeWidth="8" strokeLinecap="round"/>
+                            <line x1="50" y1="20" x2="50" y2="80" stroke="white" strokeWidth="8" strokeLinecap="round"/>
+                            <line x1="30" y1="30" x2="70" y2="70" stroke="white" strokeWidth="8" strokeLinecap="round"/>
+                            <line x1="70" y1="30" x2="30" y2="70" stroke="white" strokeWidth="8" strokeLinecap="round"/>
+                        </svg>
+                    </div>
+                    <h1 className="text-4xl font-bold text-white mb-2">Stratos</h1>
+                    <p className="text-white/70 text-sm font-light">
                         Sign in to your account
                     </p>
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-foreground">
-                                Email address
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="mt-1 block w-full rounded-md border border-input bg-secondary px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
+                {/* Login Card */}
+                <div className="glass-strong rounded-3xl p-8 shadow-deep">
+                    <form className="space-y-6" onSubmit={handleLogin}>
+                        <div className="space-y-4">
+                            {/* Email Field */}
+                            <div>
+                                <label 
+                                    htmlFor="email" 
+                                    className="block text-sm font-medium text-white mb-2"
+                                >
+                                    Email address
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    className="block w-full rounded-xl glass border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth"
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Password Field */}
+                            <div>
+                                <label 
+                                    htmlFor="password" 
+                                    className="block text-sm font-medium text-white mb-2"
+                                >
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    className="block w-full rounded-xl glass border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 shadow-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-smooth"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                className="mt-1 block w-full rounded-md border border-input bg-secondary px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                            {error}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={cn(
-                            "flex w-full justify-center rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all",
-                            loading && "opacity-50 cursor-not-allowed"
+                        {/* Error Message */}
+                        {error && (
+                            <div className="rounded-xl bg-red-500/20 backdrop-blur-sm border border-red-500/30 p-4 text-sm text-white">
+                                <div className="flex items-center gap-2">
+                                    <svg 
+                                        width="16" 
+                                        height="16" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2"
+                                    >
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="8" x2="12" y2="12"/>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    </svg>
+                                    {error}
+                                </div>
+                            </div>
                         )}
-                    >
-                        {loading ? "Signing in..." : "Sign in"}
-                    </button>
-                </form>
 
-                <p className="text-center text-xs text-muted-foreground">
-                    Use your assigned credentials to access the system.
-                </p>
-            </div>
-        </MotionContainer>
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={cn(
+                                "flex w-full justify-center items-center gap-2 rounded-full bg-white py-3.5 text-base font-semibold text-navy shadow-medium hover:shadow-deep hover-scale transition-smooth",
+                                loading && "opacity-70 cursor-not-allowed"
+                            )}
+                        >
+                            {loading ? (
+                                <>
+                                    <svg 
+                                        className="animate-spin h-5 w-5" 
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                    >
+                                        <circle 
+                                            className="opacity-25" 
+                                            cx="12" 
+                                            cy="12" 
+                                            r="10" 
+                                            stroke="currentColor" 
+                                            strokeWidth="4"
+                                        />
+                                        <path 
+                                            className="opacity-75" 
+                                            fill="currentColor" 
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        />
+                                    </svg>
+                                    Signing in...
+                                </>
+                            ) : (
+                                "Sign in"
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Footer Text */}
+                    <p className="text-center text-xs text-white/60 mt-6 font-light">
+                        Use your assigned credentials to access the system.
+                    </p>
+                </div>
+            </MotionContainer>
+        </div>
     );
 }
