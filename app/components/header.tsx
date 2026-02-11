@@ -1,10 +1,14 @@
+import { MobileNav } from "@/components/mobile-nav";
+
 export function Header({ user }: { user: any }) {
     return (
         <header className="flex h-20 items-center justify-between border-b border-border/50 bg-background/80 px-6 backdrop-blur-xl shadow-sm">
             <div className="flex items-center gap-4">
-                <h2 className="text-xl font-semibold text-foreground">Dashboard</h2>
+                <MobileNav />
+                <h2 className="text-xl font-semibold text-foreground hidden md:block">Dashboard</h2>
+                <h2 className="text-xl font-semibold text-foreground md:hidden">Stratos</h2>
             </div>
-            
+
             <div className="flex items-center gap-4">
                 {/* User Profile */}
                 <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 shadow-soft">
