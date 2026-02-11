@@ -215,10 +215,10 @@ export default function ReportsPage() {
 
                 // Calculations
                 const activeLoansCount = loans?.length || 0;
-                const totalPrincipal = loans?.reduce((sum, l) => sum + l.principal_amount, 0) || 0;
-                const totalOutstanding = loans?.reduce((sum, l) => sum + (l.metadata?.remaining_balance || l.total_amount), 0) || 0;
+                const totalPrincipal = loans?.reduce((sum, l) => sum + (l.principal_amount || 0), 0) || 0;
+                const totalOutstanding = loans?.reduce((sum, l) => sum + (l.metadata?.remaining_balance ?? l.total_amount ?? 0), 0) || 0;
                 // Expected Profit (Total Amount - Principal) - this is rough but works for now
-                const totalExpectedReturn = loans?.reduce((sum, l) => sum + l.total_amount, 0) || 0;
+                const totalExpectedReturn = loans?.reduce((sum, l) => sum + (l.total_amount || 0), 0) || 0;
 
                 // Summary Box
                 doc.setFillColor(240, 248, 255);
@@ -232,23 +232,23 @@ export default function ReportsPage() {
                 doc.setFontSize(10);
                 doc.text("Total Disbursed", 70, 45);
                 doc.setFontSize(14);
-                doc.text(`Rs. ${totalPrincipal.toLocaleString()}`, 70, 52);
+                doc.text(`Rs. ${(totalPrincipal || 0).toLocaleString()}`, 70, 52);
 
                 doc.setFontSize(10);
                 doc.text("Outstanding Balance", 140, 45);
                 doc.setFontSize(14); doc.setTextColor(192, 57, 43); // Red
-                doc.text(`Rs. ${totalOutstanding.toLocaleString()}`, 140, 52);
+                doc.text(`Rs. ${(totalOutstanding || 0).toLocaleString()}`, 140, 52);
 
                 doc.setFontSize(10); doc.setTextColor(0);
                 doc.text("Total Receivable (Principal + Interest)", 20, 62);
                 doc.setFontSize(12);
-                doc.text(`Rs. ${totalExpectedReturn.toLocaleString()}`, 20, 68);
+                doc.text(`Rs. ${(totalExpectedReturn || 0).toLocaleString()}`, 20, 68);
 
                 // Breakdown Table
                 const tableData = loans?.map(l => [
                     l.borrowers?.full_name || 'Unknown',
-                    `Rs. ${l.principal_amount.toLocaleString()}`,
-                    `Rs. ${(l.metadata?.remaining_balance || l.total_amount).toLocaleString()}`,
+                    `Rs. ${(l.principal_amount || 0).toLocaleString()}`,
+                    `Rs. ${(l.metadata?.remaining_balance ?? l.total_amount ?? 0).toLocaleString()}`,
                     new Date(l.due_date).toLocaleDateString()
                 ]) || [];
 
@@ -291,11 +291,11 @@ export default function ReportsPage() {
                 doc.text("List of active loans with outstanding balances.", 14, 30);
 
                 const tableData = loans?.map(l => {
-                    const balance = l.metadata?.remaining_balance || l.total_amount;
+                    const balance = l.metadata?.remaining_balance ?? l.total_amount ?? 0;
                     return [
                         l.borrowers?.full_name || 'Unknown',
                         l.borrowers?.phone_number || 'N/A',
-                        `Rs. ${l.total_amount.toLocaleString()}`,
+                        `Rs. ${(l.total_amount || 0).toLocaleString()}`,
                         `Rs. ${balance.toLocaleString()}`, // Outstanding
                         new Date(l.due_date).toLocaleDateString()
                     ];
