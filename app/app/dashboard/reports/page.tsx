@@ -258,7 +258,7 @@ export default function ReportsPage() {
                     body: tableData,
                     theme: 'grid',
                     headStyles: { fillColor: [52, 73, 94], textColor: 255 },
-                    footer: [['Total', `Rs. ${totalPrincipal.toLocaleString()}`, `Rs. ${totalOutstanding.toLocaleString()}`, '']]
+                    foot: [['Total', `Rs. ${totalPrincipal.toLocaleString()}`, `Rs. ${totalOutstanding.toLocaleString()}`, '']]
                 });
 
                 doc.save(`Portfolio_Health_${now.toISOString().split('T')[0]}.pdf`);
@@ -312,175 +312,181 @@ export default function ReportsPage() {
 
                 doc.save(`Arrears_Report_${now.toISOString().split('T')[0]}.pdf`);
             }
-
-            return (
-                <MotionContainer className="space-y-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">System Reports & Data</h1>
-                        <p className="text-muted-foreground mt-2">
-                            Export system data for backup or generate business performance reports.
-                        </p>
-                    </div>
-
-                    {/* Section 1: Data Backup (CSV) */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
-                            <h2 className="text-xl font-semibold text-foreground">Data Backup (CSV)</h2>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                            {/* Borrowers CSV */}
-                            <Card className="hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-muted-foreground" />
-                                        Borrower Registry
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Complete list of all borrowers and their details.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
-                                        onClick={() => handleExportCSV('borrowers')}
-                                        disabled={!!loading}
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        {loading === 'borrowers' ? "Exporting..." : "Download CSV"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Loans CSV */}
-                            <Card className="hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                                        Loan Portfolio
-                                    </CardTitle>
-                                    <CardDescription>
-                                        All active, completed, and defaulted loans.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
-                                        onClick={() => handleExportCSV('loans')}
-                                        disabled={!!loading}
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        {loading === 'loans' ? "Exporting..." : "Download CSV"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Payments CSV */}
-                            <Card className="hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                                        <Banknote className="h-4 w-4 text-muted-foreground" />
-                                        Payment History
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Full transaction log of all collected payments.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
-                                        onClick={() => handleExportCSV('payments')}
-                                        disabled={!!loading}
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        {loading === 'payments' ? "Exporting..." : "Download CSV"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-
-                    {/* Section 2: Business Reports (PDF) */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            <h2 className="text-xl font-semibold text-foreground">Business Reports (PDF)</h2>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                            {/* Monthly Collection Report */}
-                            <Card className="bg-secondary/20 border-secondary hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                                        <CalendarRange className="h-4 w-4 text-primary" />
-                                        Monthly Collection Summary
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Total collected vs expected for the current month.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        className="w-full gap-2"
-                                        onClick={() => handleGeneratePDF('monthly')}
-                                        disabled={!!loading}
-                                    >
-                                        <FileText className="h-4 w-4" />
-                                        {loading === 'monthly' ? "Generating..." : "Generate PDF"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Portfolio Health */}
-                            <Card className="bg-secondary/20 border-secondary hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                                        <Activity className="h-4 w-4 text-primary" />
-                                        Portfolio Health
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Overview of active loans, outstanding amounts, and risk.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        className="w-full gap-2"
-                                        onClick={() => handleGeneratePDF('portfolio')}
-                                        disabled={!!loading}
-                                    >
-                                        <FileText className="h-4 w-4" />
-                                        {loading === 'portfolio' ? "Generating..." : "Generate PDF"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Arrears Report */}
-                            <Card className="bg-destructive/5 border-destructive/20 hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-medium flex items-center gap-2 text-destructive">
-                                        <AlertTriangle className="h-4 w-4" />
-                                        Arrears & Defaults
-                                    </CardTitle>
-                                    <CardDescription>
-                                        List of borrowers who are behind on payments.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        variant="destructive"
-                                        className="w-full gap-2"
-                                        onClick={() => handleGeneratePDF('arrears')}
-                                        disabled={!!loading}
-                                    >
-                                        <FileText className="h-4 w-4" />
-                                        {loading === 'arrears' ? "Generating..." : "Generate PDF"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </MotionContainer>
-            );
+        } catch (error: any) {
+            console.error("PDF Generation Error:", error);
+            alert(`Failed to generate PDF report: ${error?.message || error}`);
         }
+        setLoading(null);
+    };
+
+    return (
+        <MotionContainer className="space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">System Reports & Data</h1>
+                <p className="text-muted-foreground mt-2">
+                    Export system data for backup or generate business performance reports.
+                </p>
+            </div>
+
+            {/* Section 1: Data Backup (CSV) */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+                    <h2 className="text-xl font-semibold text-foreground">Data Backup (CSV)</h2>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                    {/* Borrowers CSV */}
+                    <Card className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                Borrower Registry
+                            </CardTitle>
+                            <CardDescription>
+                                Complete list of all borrowers and their details.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                variant="outline"
+                                className="w-full gap-2"
+                                onClick={() => handleExportCSV('borrowers')}
+                                disabled={!!loading}
+                            >
+                                <Download className="h-4 w-4" />
+                                {loading === 'borrowers' ? "Exporting..." : "Download CSV"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Loans CSV */}
+                    <Card className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                Loan Portfolio
+                            </CardTitle>
+                            <CardDescription>
+                                All active, completed, and defaulted loans.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                variant="outline"
+                                className="w-full gap-2"
+                                onClick={() => handleExportCSV('loans')}
+                                disabled={!!loading}
+                            >
+                                <Download className="h-4 w-4" />
+                                {loading === 'loans' ? "Exporting..." : "Download CSV"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Payments CSV */}
+                    <Card className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <Banknote className="h-4 w-4 text-muted-foreground" />
+                                Payment History
+                            </CardTitle>
+                            <CardDescription>
+                                Full transaction log of all collected payments.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                variant="outline"
+                                className="w-full gap-2"
+                                onClick={() => handleExportCSV('payments')}
+                                disabled={!!loading}
+                            >
+                                <Download className="h-4 w-4" />
+                                {loading === 'payments' ? "Exporting..." : "Download CSV"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Section 2: Business Reports (PDF) */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <h2 className="text-xl font-semibold text-foreground">Business Reports (PDF)</h2>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                    {/* Monthly Collection Report */}
+                    <Card className="bg-secondary/20 border-secondary hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <CalendarRange className="h-4 w-4 text-primary" />
+                                Monthly Collection Summary
+                            </CardTitle>
+                            <CardDescription>
+                                Total collected vs expected for the current month.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                className="w-full gap-2"
+                                onClick={() => handleGeneratePDF('monthly')}
+                                disabled={!!loading}
+                            >
+                                <FileText className="h-4 w-4" />
+                                {loading === 'monthly' ? "Generating..." : "Generate PDF"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Portfolio Health */}
+                    <Card className="bg-secondary/20 border-secondary hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-primary" />
+                                Portfolio Health
+                            </CardTitle>
+                            <CardDescription>
+                                Overview of active loans, outstanding amounts, and risk.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                className="w-full gap-2"
+                                onClick={() => handleGeneratePDF('portfolio')}
+                                disabled={!!loading}
+                            >
+                                <FileText className="h-4 w-4" />
+                                {loading === 'portfolio' ? "Generating..." : "Generate PDF"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Arrears Report */}
+                    <Card className="bg-destructive/5 border-destructive/20 hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-medium flex items-center gap-2 text-destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                Arrears & Defaults
+                            </CardTitle>
+                            <CardDescription>
+                                List of borrowers who are behind on payments.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button
+                                variant="destructive"
+                                className="w-full gap-2"
+                                onClick={() => handleGeneratePDF('arrears')}
+                                disabled={!!loading}
+                            >
+                                <FileText className="h-4 w-4" />
+                                {loading === 'arrears' ? "Generating..." : "Generate PDF"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </MotionContainer>
+    );
+}

@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Advanced Microfinance Loan Collection Management System",
 };
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,6 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased font-sans`}>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
