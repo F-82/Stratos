@@ -3,8 +3,9 @@
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, Phone, CreditCard } from "lucide-react";
+import { Plus, Eye, Phone, CreditCard, Search } from "lucide-react";
 import Link from "next/link";
 import { MotionContainer } from "@/components/motion-container";
 
@@ -22,19 +23,36 @@ export default function BorrowersPage() {
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     useEffect(() => {
         async function fetchBorrowers() {
-            const { data, error } = await supabase
+            setLoading(true);
+            let query = supabase
                 .from("borrowers")
                 .select("*")
                 .order("created_at", { ascending: false });
+
+            if (debouncedQuery) {
+                query = query.or(`full_name.ilike.%${debouncedQuery}%,nic_number.ilike.%${debouncedQuery}%,phone.ilike.%${debouncedQuery}%`);
+            }
+
+            const { data, error } = await query;
 
             if (data) setBorrowers(data);
             setLoading(false);
         }
 
         fetchBorrowers();
-    }, []);
+    }, [debouncedQuery]);
 
     return (
         <MotionContainer className="space-y-6">
@@ -48,10 +66,21 @@ export default function BorrowersPage() {
                 </div>
                 <Link href="/dashboard/borrowers/add">
                     <Button className="rounded-full px-6 py-6 bg-gradient-to-r from-light-blue to-medium-blue hover:shadow-glow transition-smooth shadow-medium">
-                        <Plus className="mr-2 h-5 w-5" strokeWidth={2.5} /> 
+                        <Plus className="mr-2 h-5 w-5" strokeWidth={2.5} />
                         Add Borrower
                     </Button>
                 </Link>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search by Name, NIC, or Phone..."
+                    className="pl-10 max-w-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
             </div>
 
             {/* Stats Cards */}
@@ -81,17 +110,17 @@ export default function BorrowersPage() {
                             </p>
                         </div>
                         <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 p-3 rounded-xl">
-                            <svg 
-                                width="24" 
-                                height="24" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
                                 strokeWidth="2"
                                 className="text-emerald-600"
                             >
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
                             </svg>
                         </div>
                     </div>
@@ -108,18 +137,18 @@ export default function BorrowersPage() {
                             </p>
                         </div>
                         <div className="bg-gradient-to-br from-red-100 to-red-50 p-3 rounded-xl">
-                            <svg 
-                                width="24" 
-                                height="24" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
                                 strokeWidth="2"
                                 className="text-red-600"
                             >
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="15" y1="9" x2="9" y2="15"/>
-                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="15" y1="9" x2="9" y2="15" />
+                                <line x1="9" y1="9" x2="15" y2="15" />
                             </svg>
                         </div>
                     </div>
@@ -143,22 +172,22 @@ export default function BorrowersPage() {
                             <TableRow>
                                 <TableCell colSpan={5} className="h-32 text-center">
                                     <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                                        <svg 
-                                            className="animate-spin h-5 w-5" 
+                                        <svg
+                                            className="animate-spin h-5 w-5"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                         >
-                                            <circle 
-                                                className="opacity-25" 
-                                                cx="12" 
-                                                cy="12" 
-                                                r="10" 
-                                                stroke="currentColor" 
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
                                                 strokeWidth="4"
                                             />
-                                            <path 
-                                                className="opacity-75" 
-                                                fill="currentColor" 
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                             />
                                         </svg>
@@ -170,9 +199,19 @@ export default function BorrowersPage() {
                             <TableRow>
                                 <TableCell colSpan={5} className="h-32 text-center">
                                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                        <CreditCard className="w-12 h-12 opacity-20" />
-                                        <p className="font-medium">No borrowers found</p>
-                                        <p className="text-sm">Add your first borrower to get started</p>
+                                        {debouncedQuery ? (
+                                            <>
+                                                <Search className="w-12 h-12 opacity-20" />
+                                                <p className="font-medium">No matching borrowers</p>
+                                                <p className="text-sm">Try a different name, NIC, or phone number</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CreditCard className="w-12 h-12 opacity-20" />
+                                                <p className="font-medium">No borrowers found</p>
+                                                <p className="text-sm">Add your first borrower to get started</p>
+                                            </>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -188,17 +227,16 @@ export default function BorrowersPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                            borrower.status === 'active' 
-                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                                                : 'bg-red-100 text-red-700 border border-red-200'
-                                        }`}>
+                                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${borrower.status === 'active'
+                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                            : 'bg-red-100 text-red-700 border border-red-200'
+                                            }`}>
                                             {borrower.status}
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button 
-                                            variant="ghost" 
+                                        <Button
+                                            variant="ghost"
                                             size="sm"
                                             className="rounded-xl hover:bg-secondary transition-smooth"
                                         >
