@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MotionContainer } from "@/components/motion-container";
 import { KPICards } from "@/components/kpi-cards";
 import { CollectionsTrend } from "@/components/collections-trend";
+import { DashboardSkeleton } from "@/components/skeletons";
 
 export default function DashboardPage() {
     const [metrics, setMetrics] = useState({
@@ -58,6 +59,23 @@ export default function DashboardPage() {
         day: 'numeric'
     });
 
+    if (metrics.totalCollected === 0 && metrics.activeLoans === 0 && metrics.totalOutstanding === 0) {
+        return (
+            <MotionContainer className="min-h-screen">
+                {/* Page Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-4xl font-bold text-foreground tracking-tight">Loan Management</h1>
+                        <p className="text-sm text-muted-foreground mt-2 font-normal">{todayDate}</p>
+                    </div>
+                </div>
+                <DashboardSkeleton />
+            </MotionContainer>
+        );
+    }
+
+    // We need to add loading state to component
+
     return (
         <MotionContainer className="min-h-screen">
             {/* Page Header */}
@@ -78,7 +96,7 @@ export default function DashboardPage() {
                     <div className="lg:col-span-2">
                         <CollectionsTrend />
                     </div>
-                    
+
                     {/* Side Statistics */}
                     <div className="space-y-6">
                         {/* On-Time Rate Card */}
@@ -92,8 +110,8 @@ export default function DashboardPage() {
                                     <span className="text-sm text-muted-foreground">8% missed</span>
                                 </div>
                                 <div className="w-full bg-secondary rounded-full h-3 overflow-hidden shadow-inner">
-                                    <div 
-                                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full shadow-sm transition-all" 
+                                    <div
+                                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full shadow-sm transition-all"
                                         style={{ width: '92%' }}
                                     />
                                 </div>
@@ -112,16 +130,16 @@ export default function DashboardPage() {
                                 <div className="text-4xl font-bold text-foreground">Rs. 520,000</div>
                                 <p className="text-sm text-muted-foreground">Projected collections</p>
                                 <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium mt-4">
-                                    <svg 
-                                        width="16" 
-                                        height="16" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
                                         strokeWidth="2"
                                     >
-                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                                        <polyline points="17 6 23 6 23 12"/>
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                        <polyline points="17 6 23 6 23 12" />
                                     </svg>
                                     +8.5% from last month
                                 </div>
