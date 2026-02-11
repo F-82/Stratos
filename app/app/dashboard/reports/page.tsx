@@ -15,6 +15,7 @@ import {
     AlertTriangle
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -38,7 +39,7 @@ export default function ReportsPage() {
                 data = borrowers.map(b => ({
                     'Full Name': b.full_name,
                     'NIC Number': b.nic_number,
-                    'Phone': b.phone_number,
+                    'Phone': b.phone,
                     'Address': b.address,
                     'Status': b.status,
                     'Registered Date': new Date(b.created_at).toLocaleDateString()
@@ -106,15 +107,17 @@ export default function ReportsPage() {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                toast.success(`Exported ${type} successfully`);
             } else {
-                alert("No data found to export.");
+                toast.info("No data found to export.");
             }
 
         } catch (error) {
             console.error(error);
-            alert("Failed to export CSV");
+            toast.error("Failed to export CSV");
+        } finally {
+            setLoading(null);
         }
-        setLoading(null);
     };
 
     const handleGeneratePDF = async (reportType: string) => {
@@ -274,7 +277,7 @@ export default function ReportsPage() {
                 // For simplicity, let's fetch ALL Active loans and filter in JS for those past due date
                 const { data: loans, error } = await supabase
                     .from('loans')
-                    .select('*, borrowers(full_name, phone_number)')
+                    .select('*, borrowers(full_name, phone)')
                     .eq('status', 'active');
 
                 if (error) throw error;
@@ -294,7 +297,7 @@ export default function ReportsPage() {
                     const balance = l.metadata?.remaining_balance ?? l.total_amount ?? 0;
                     return [
                         l.borrowers?.full_name || 'Unknown',
-                        l.borrowers?.phone_number || 'N/A',
+                        l.borrowers?.phone || 'N/A',
                         `Rs. ${(l.total_amount || 0).toLocaleString()}`,
                         `Rs. ${balance.toLocaleString()}`, // Outstanding
                         new Date(l.due_date).toLocaleDateString()
@@ -312,11 +315,14 @@ export default function ReportsPage() {
 
                 doc.save(`Arrears_Report_${now.toISOString().split('T')[0]}.pdf`);
             }
+
+            toast.success("PDF report generated successfully");
         } catch (error: any) {
             console.error("PDF Generation Error:", error);
-            alert(`Failed to generate PDF report: ${error?.message || error}`);
+            toast.error(`Failed to generate PDF report: ${error?.message || error}`);
+        } finally {
+            setLoading(null);
         }
-        setLoading(null);
     };
 
     return (
