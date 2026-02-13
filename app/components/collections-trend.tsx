@@ -3,16 +3,24 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
-const data = [
-    { month: 'Sep', amount: 380 },
-    { month: 'Oct', amount: 410 },
-    { month: 'Nov', amount: 435 },
-    { month: 'Dec', amount: 455 },
-    { month: 'Jan', amount: 468 },
-    { month: 'Feb', amount: 482 },
+const initialData = [
+    { month: 'Sep', amount: 0 },
+    { month: 'Oct', amount: 0 },
+    { month: 'Nov', amount: 0 },
+    { month: 'Dec', amount: 0 },
+    { month: 'Jan', amount: 0 },
+    { month: 'Feb', amount: 0 },
 ];
 
-export function CollectionsTrend() {
+interface CollectionsTrendProps {
+    data?: { month: string; amount: number }[];
+    growth?: number;
+}
+
+export function CollectionsTrend({ data = initialData, growth = 0 }: CollectionsTrendProps) {
+    const formattedGrowth = growth >= 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
+    const isPositive = growth >= 0;
+
     return (
         <div className="bg-card rounded-2xl border border-border/50 p-6 h-full shadow-soft hover-lift transition-smooth">
             <div className="flex items-center justify-between mb-6">
@@ -20,9 +28,9 @@ export function CollectionsTrend() {
                     <h2 className="text-2xl font-bold text-foreground tracking-tight">Collections Trend</h2>
                     <p className="text-sm text-muted-foreground mt-2 font-normal">Last 6 months performance</p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-50 rounded-xl text-sm font-semibold text-emerald-700 shadow-soft">
-                    <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
-                    <span>+17.6%</span>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold shadow-soft ${isPositive ? 'bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700' : 'bg-gradient-to-r from-red-100 to-red-50 text-red-700'}`}>
+                    <TrendingUp className={`w-4 h-4 ${!isPositive && 'rotate-180'}`} strokeWidth={2.5} />
+                    <span>{formattedGrowth}</span>
                 </div>
             </div>
 
@@ -36,10 +44,10 @@ export function CollectionsTrend() {
                                 <stop offset="100%" stopColor="#01084D" />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid 
-                            strokeDasharray="3 3" 
-                            stroke="rgba(0, 0, 0, 0.06)" 
-                            vertical={false} 
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="rgba(0, 0, 0, 0.06)"
+                            vertical={false}
                         />
                         <XAxis
                             dataKey="month"
@@ -52,7 +60,7 @@ export function CollectionsTrend() {
                         <YAxis
                             stroke="#9CA3AF"
                             style={{ fontSize: '12px', fontWeight: '500' }}
-                            tickFormatter={(value) => `${value}K`}
+                            tickFormatter={(value) => `${value}`}
                             axisLine={false}
                             tickLine={false}
                             dx={-10}
@@ -68,7 +76,7 @@ export function CollectionsTrend() {
                                 padding: '12px 16px',
                                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
                             }}
-                            formatter={(value: any) => [`Rs. ${value}K`, 'Collections']}
+                            formatter={(value: any) => [`Rs. ${value.toLocaleString()}`, 'Collections']}
                             labelStyle={{ color: '#8EC3DC', fontWeight: '600', marginBottom: '4px' }}
                         />
                         <Line
@@ -76,14 +84,14 @@ export function CollectionsTrend() {
                             dataKey="amount"
                             stroke="url(#lineGradientDark)"
                             strokeWidth={3}
-                            dot={{ 
-                                fill: '#498DBA', 
-                                strokeWidth: 3, 
+                            dot={{
+                                fill: '#498DBA',
+                                strokeWidth: 3,
                                 stroke: '#fff',
-                                r: 5 
+                                r: 5
                             }}
-                            activeDot={{ 
-                                r: 7, 
+                            activeDot={{
+                                r: 7,
                                 fill: '#8EC3DC',
                                 stroke: '#fff',
                                 strokeWidth: 3
