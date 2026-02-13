@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +36,7 @@ export default function CreateLoanPage() {
 
     const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>("");
     const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+    const [startDate, setStartDate] = useState<Date | undefined>(new Date());
 
     useEffect(() => {
         async function fetchData() {
@@ -52,8 +54,8 @@ export default function CreateLoanPage() {
         setLoading(true);
         setError(null);
 
-        if (!selectedBorrowerId || !selectedPlanId) {
-            setError("Please select both a borrower and a loan plan.");
+        if (!selectedBorrowerId || !selectedPlanId || !startDate) {
+            setError("Please select a borrower, a loan plan, and a start date.");
             setLoading(false);
             return;
         }
@@ -86,7 +88,6 @@ export default function CreateLoanPage() {
             return;
         }
 
-        const startDate = new Date();
         const endDate = addMonths(startDate, plan.duration_months);
 
         const loanData = {
@@ -168,14 +169,30 @@ export default function CreateLoanPage() {
                         </div>
 
                         {selectedPlan && (
-                            <div className="rounded-lg bg-secondary/50 p-4 space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Total Payable:</span>
-                                    <span className="font-medium">LKR {(selectedPlan.installment_amount * selectedPlan.duration_months).toLocaleString()}</span>
+                            <div className="rounded-lg bg-secondary/50 p-4 space-y-4 text-sm">
+                                <div className="space-y-2">
+                                    <Label>Loan Start Date</Label>
+                                    <Input
+                                        type="date"
+                                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+                                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+                                        className="bg-background"
+                                    />
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">End Date:</span>
-                                    <span className="font-medium">{format(addMonths(new Date(), selectedPlan.duration_months), 'MMM d, yyyy')}</span>
+                                <div className="pt-2 border-t border-border/50 space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Total Payable:</span>
+                                        <span className="font-medium">LKR {(selectedPlan.installment_amount * selectedPlan.duration_months).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">End Date:</span>
+                                        <span className="font-medium">
+                                            {startDate
+                                                ? format(addMonths(startDate, selectedPlan.duration_months), 'MMM d, yyyy')
+                                                : '-'
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         )}

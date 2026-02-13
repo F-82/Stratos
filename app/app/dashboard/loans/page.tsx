@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Eye, DollarSign, TrendingUp, CheckCircle, Search, Filter } from "lucide-react";
 import Link from "next/link";
 import { MotionContainer } from "@/components/motion-container";
+import { LoanDetailsDialog } from "@/components/loan-details-dialog";
 
 interface Loan {
     id: string;
@@ -243,14 +244,7 @@ export default function LoansPage() {
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="rounded-xl hover:bg-secondary transition-smooth"
-                                        >
-                                            <Eye className="mr-2 h-4 w-4" />
-                                            Details
-                                        </Button>
+                                        <LoanDetailsDialog loanId={loan.id} />
                                     </TableCell>
                                 </TableRow>
                             ))

@@ -157,6 +157,34 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
     // Calculate strokeDashoffset: full circumference minus the length of the filled part
     const strokeDashoffset = circumference - ((progressPercentage / 100) * circumference);
 
+    // Date Logic
+    let nextDueDate: Date | null = null;
+    let isOverdue = false;
+
+    if (selectedLoan && selectedLoan.start_date) {
+        // Calculate the due date for the *next* installment (paidCount + 1)
+        // Assuming monthly for now. 
+        // Example: Start Jan 1. 
+        // 0 Paid -> Due Feb 1 (Start + 1 month)
+        // 1 Paid -> Due Mar 1 (Start + 2 months)
+        const nextInstallmentNum = paidCount + 1;
+        const startDate = new Date(selectedLoan.start_date);
+
+        // Simple month addition
+        nextDueDate = new Date(startDate);
+        nextDueDate.setMonth(startDate.getMonth() + nextInstallmentNum);
+
+        const today = new Date();
+        // Reset time parts for accurate date comparison
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(nextDueDate);
+        due.setHours(0, 0, 0, 0);
+
+        if (today > due) {
+            isOverdue = true;
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -181,58 +209,72 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                 <>
                     {/* Progress Visualization */}
                     <div className="flex justify-center py-6">
-                        <div className="relative flex items-center justify-center">
-                            {/* Rotated so it starts at top (-90deg) */}
-                            <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                                {/* Background Ring (Grey) */}
-                                <circle
-                                    cx={center}
-                                    cy={center}
-                                    r={radius}
-                                    fill="transparent"
-                                    stroke="var(--secondary)" // Use theme variable
-                                    strokeWidth={strokeWidth}
-                                />
-                                {/* Progress Ring (Primary Color) */}
-                                <circle
-                                    cx={center}
-                                    cy={center}
-                                    r={radius}
-                                    fill="transparent"
-                                    stroke="var(--primary)" // Use theme variable
-                                    strokeWidth={strokeWidth}
-                                    strokeDasharray={circumference}
-                                    strokeDashoffset={strokeDashoffset}
-                                    strokeLinecap="butt" // 'butt' is better for segmented look with separators
-                                />
-                                {/* Separator Lines (to create segments) */}
-                                {Array.from({ length: totalSegments }).map((_, i) => {
-                                    const angle = (i * 360) / totalSegments;
-                                    const rad = (angle * Math.PI) / 180;
-                                    // Calculate line start/end to cut through the stroke width
-                                    const x1 = center + (radius - strokeWidth / 2 - 2) * Math.cos(rad);
-                                    const y1 = center + (radius - strokeWidth / 2 - 2) * Math.sin(rad);
-                                    const x2 = center + (radius + strokeWidth / 2 + 2) * Math.cos(rad);
-                                    const y2 = center + (radius + strokeWidth / 2 + 2) * Math.sin(rad);
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="relative flex items-center justify-center">
+                                {/* Rotated so it starts at top (-90deg) */}
+                                <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                                    {/* Background Ring (Grey) */}
+                                    <circle
+                                        cx={center}
+                                        cy={center}
+                                        r={radius}
+                                        fill="transparent"
+                                        stroke="var(--secondary)" // Use theme variable
+                                        strokeWidth={strokeWidth}
+                                    />
+                                    {/* Progress Ring */}
+                                    <circle
+                                        cx={center}
+                                        cy={center}
+                                        r={radius}
+                                        fill="transparent"
+                                        stroke={isOverdue ? "#ef4444" : "var(--primary)"}
+                                        strokeWidth={strokeWidth}
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={strokeDashoffset}
+                                        strokeLinecap="butt"
+                                        className="transition-all duration-1000 ease-out"
+                                    />
+                                    {/* Separator Lines (to create segments) */}
+                                    {Array.from({ length: totalSegments }).map((_, i) => {
+                                        const angle = (i * 360) / totalSegments;
+                                        const rad = (angle * Math.PI) / 180;
+                                        const x1 = center + (radius - strokeWidth / 2 - 2) * Math.cos(rad);
+                                        const y1 = center + (radius - strokeWidth / 2 - 2) * Math.sin(rad);
+                                        const x2 = center + (radius + strokeWidth / 2 + 2) * Math.cos(rad);
+                                        const y2 = center + (radius + strokeWidth / 2 + 2) * Math.sin(rad);
 
-                                    return (
-                                        <line
-                                            key={i}
-                                            x1={x1}
-                                            y1={y1}
-                                            x2={x2}
-                                            y2={y2}
-                                            stroke="var(--background)" // Matches page bg to look like "gap"
-                                            strokeWidth="3"
-                                        />
-                                    );
-                                })}
-                            </svg>
-                            {/* Inner Text (Center) */}
-                            <div className="absolute flex flex-col items-center">
-                                <span className="text-4xl font-bold">{paidCount}</span>
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider">of {totalSegments} Paid</span>
+                                        return (
+                                            <line
+                                                key={i}
+                                                x1={x1}
+                                                y1={y1}
+                                                x2={x2}
+                                                y2={y2}
+                                                stroke="var(--background)"
+                                                strokeWidth="3"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                                {/* Inner Text (Center) */}
+                                <div className="absolute flex flex-col items-center">
+                                    <span className={`text-4xl font-bold ${isOverdue ? 'text-red-500' : ''}`}>{paidCount}</span>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wider">of {totalSegments} Paid</span>
+                                </div>
                             </div>
+
+                            {/* Due Date Warning */}
+                            {paidCount < totalSegments && (
+                                <div className={`flex flex-col items-center px-4 py-2 rounded-lg ${isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-primary/5 text-primary border border-primary/10'}`}>
+                                    <span className="text-xs font-semibold uppercase tracking-wider mb-0.5">
+                                        {isOverdue ? "Overdue" : "Next Due"}
+                                    </span>
+                                    <span className="font-bold">
+                                        {nextDueDate ? nextDueDate.toLocaleDateString() : 'N/A'}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
