@@ -24,45 +24,61 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, User, Shield } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { resetCollectors, resetBorrowers, resetLoans } from "@/app/actions/vault";
+import { AlertTriangle, Trash2, RefreshCcw, HardDrive, ShieldAlert, Plus, User, Shield } from "lucide-react";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface LoanPlan {
-    id: number;
+    id: string;
     name: string;
     principal_amount: number;
-    installment_amount: number;
     duration_months: number;
     interest_rate: number;
+    installment_amount: number;
 }
 
 interface UserProfile {
     id: string;
-    role: string;
-    // Assuming these fields might exist or we might need to fetch them differently if they are strict auth fields
-    // For now, let's see what we get. If we only get role, we'll display ID.
-    // Ideally profiles should have metadata. 
-    full_name?: string;
+    full_name: string;
     email?: string;
+    role: string;
+    created_at: string;
 }
 
 export default function SettingsPage() {
     const supabase = createClient();
-    const [plans, setPlans] = useState<LoanPlan[]>([]);
-    const [users, setUsers] = useState<UserProfile[]>([]);
-    const [loadingPlans, setLoadingPlans] = useState(true);
-    const [loadingUsers, setLoadingUsers] = useState(true);
 
-    // New Plan Form State
+    // Loan Plans State
+    const [plans, setPlans] = useState<LoanPlan[]>([]);
+    const [loadingPlans, setLoadingPlans] = useState(true);
     const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
+    const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
     const [newPlan, setNewPlan] = useState({
         name: "",
         principal_amount: "",
         duration_months: "",
-        interest_rate: "",
+        interest_rate: ""
     });
-    const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
+
+    // Users State
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(true);
+
+    // Vault State
+    const [isVaultOpen, setIsVaultOpen] = useState(false);
+    const [vaultLoading, setVaultLoading] = useState(false);
 
     useEffect(() => {
         fetchPlans();
@@ -72,12 +88,12 @@ export default function SettingsPage() {
     const fetchPlans = async () => {
         setLoadingPlans(true);
         const { data, error } = await supabase
-            .from("loan_plans")
-            .select("*")
-            .order("id", { ascending: true });
+            .from('loan_plans')
+            .select('*')
+            .order('created_at', { ascending: false });
 
         if (error) {
-            console.error("Error fetching plans:", error);
+            console.error('Error fetching plans:', error);
             toast.error("Failed to load loan plans");
         } else {
             setPlans(data || []);
@@ -87,15 +103,14 @@ export default function SettingsPage() {
 
     const fetchUsers = async () => {
         setLoadingUsers(true);
-        // Fetch profiles. Assuming 'profiles' table has basic info.
-        // If specific fields like name/email are missing in schema, this might return partial data.
         const { data, error } = await supabase
-            .from("profiles")
-            .select("*");
+            .from('profiles')
+            .select('*')
+            .order('created_at', { ascending: false });
 
         if (error) {
-            console.error("Error fetching users:", error);
-            toast.error("Failed to load users");
+            console.error('Error fetching users:', error);
+            // toast.error("Failed to load users");
         } else {
             setUsers(data || []);
         }
@@ -111,39 +126,23 @@ export default function SettingsPage() {
             const duration = parseInt(newPlan.duration_months);
             const rate = parseFloat(newPlan.interest_rate);
 
-            // Calculate installment using PMT formula or simple interest based on business logic
-            // For now, let's use a simple interest formula: (Principal + (Principal * Rate * Duration / 12)) / Duration
-            // Wait, previous code (demo) had hardcoded values. Let's start with a basic calculation.
-            // Actually, Stratos seems to use fixed installment amounts in plans based on the create loan page types.
-            // Let's assume (Principal * (1 + (Rate/100) * (Duration/12))) / Duration
+            if (isNaN(principal) || isNaN(duration) || isNaN(rate)) {
+                toast.error("Please enter valid numbers");
+                setIsSubmittingPlan(false);
+                return;
+            }
 
-            // However, the DB has `installment_amount` column?
-            // Let's verify schema from `dashboard/loans/create/page.tsx` interface:
-            // interface LoanPlan { id, name, principal_amount, installment_amount, duration_months }
-            // It doesn't seemingly have interest_rate in the interface there but it might be in DB. 
-            // `dashboard/loans/page.tsx` selects `plan:loan_plans(name)`.
-            // `dashboard/reports/page.tsx` selects `interest_rate` from `loans` table, not plans.
-
-            // Let's assume we calculate installment amount automatically or ask user for it?
-            // Let's calculate it for simplicity: Total = Principal * (1 + Rate/100). Installment = Total / Duration.
-            // This assumes Rate is Flat Rate for the term. Or maybe Rate is per annum.
-            // Let's assume Rate is Flat % per Month for microfinance? Or Flat for term? 
-            // Let's stick to a simple Monthly Rate input or similar.
-            // Actually, let's just make `installment_amount` a calculated field based on 20% flat interest for now to match typical microfinance, 
-            // OR add an input for it. Let's add an input for Installment Amount to be safe and flexible.
-
-            // WAIT - I need to check if `interest_rate` column exists in `loan_plans`.
-            // Creating a plan might fail if I insert a column that doesn't exist.
-            // I'll calculate `installment_amount` and insert it.
-
-            const totalAmount = principal * (1 + (rate / 100)); // Simple flat rate calculation
+            // Calculation: Simple Interest Flat Rate per Annum
+            // Interest = Principal * (Rate / 100) * (Duration / 12)
+            const interest = principal * (rate / 100) * (duration / 12);
+            const totalAmount = principal + interest;
             const installment = Math.ceil(totalAmount / duration);
 
-            const { error } = await supabase.from("loan_plans").insert([{
+            const { error } = await supabase.from('loan_plans').insert([{
                 name: newPlan.name,
                 principal_amount: principal,
                 duration_months: duration,
-                // interest_rate: rate, // Might not exist in plans table, let's omit for now unless we know for sure
+                interest_rate: rate,
                 installment_amount: installment
             }]);
 
@@ -153,24 +152,46 @@ export default function SettingsPage() {
             setIsAddPlanOpen(false);
             setNewPlan({ name: "", principal_amount: "", duration_months: "", interest_rate: "" });
             fetchPlans();
-
         } catch (error: any) {
-            console.error(error);
-            toast.error(`Failed to create plan: ${error.message}`);
+            toast.error(error.message || "Failed to create plan");
         } finally {
             setIsSubmittingPlan(false);
         }
     };
 
-    const handleDeletePlan = async (id: number) => {
+    const handleDeletePlan = async (id: string) => {
         if (!confirm("Are you sure you want to delete this plan?")) return;
 
-        const { error } = await supabase.from("loan_plans").delete().eq("id", id);
+        const { error } = await supabase.from('loan_plans').delete().eq('id', id);
         if (error) {
             toast.error("Failed to delete plan");
         } else {
             toast.success("Plan deleted");
             fetchPlans();
+        }
+    };
+
+    const handleVaultAction = async (actionType: 'collectors' | 'borrowers' | 'loans') => {
+        setVaultLoading(true);
+        try {
+            let result;
+            if (actionType === 'collectors') result = await resetCollectors();
+            else if (actionType === 'borrowers') result = await resetBorrowers();
+            else if (actionType === 'loans') result = await resetLoans();
+
+            if (result?.error) {
+                toast.error(result.error);
+            } else {
+                toast.success(result?.message || "Action completed");
+                // Refresh data
+                fetchPlans();
+                fetchUsers();
+            }
+        } catch (e) {
+            toast.error("An error occurred");
+        } finally {
+            setVaultLoading(false);
+            setIsVaultOpen(false);
         }
     };
 
@@ -183,6 +204,115 @@ export default function SettingsPage() {
                         Manage system configurations and users.
                     </p>
                 </div>
+
+                <Dialog open={isVaultOpen} onOpenChange={setIsVaultOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="destructive" className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20">
+                            <ShieldAlert className="h-4 w-4" />
+                            Vault Access
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md border-red-500/20">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-red-600">
+                                <ShieldAlert className="h-5 w-5" />
+                                System Vault (Danger Zone)
+                            </DialogTitle>
+                            <DialogDescription>
+                                Perform destructive actions for testing purposes. These actions cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                            <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-red-900">Purge Collectors</h4>
+                                    <p className="text-xs text-red-700">Delete all collector accounts.</p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={vaultLoading}>
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Purge
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete ALL collector accounts and their profiles. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleVaultAction('collectors')} className="bg-red-600 hover:bg-red-700">
+                                                Yes, delete collectors
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-orange-900">Purge Borrowers</h4>
+                                    <p className="text-xs text-orange-700">Delete all borrower records.</p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button className="bg-orange-500 hover:bg-orange-600 text-white" size="sm" disabled={vaultLoading}>
+                                            <User className="h-4 w-4 mr-2" />
+                                            Purge
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will delete ALL borrowers. Loans associated with them might technically remain orphaned if not cascaded, but we recommend resetting loans too.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleVaultAction('borrowers')} className="bg-orange-600 hover:bg-orange-700">
+                                                Yes, delete borrowers
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-medium text-blue-900">Reset Loans</h4>
+                                    <p className="text-xs text-blue-700">Wipe all loans and payments.</p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" size="sm" disabled={vaultLoading}>
+                                            <RefreshCcw className="h-4 w-4 mr-2" />
+                                            Reset
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Reset all loan data?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will delete ALL active loans and payment history. Financial data will be lost.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleVaultAction('loans')} className="bg-blue-600 hover:bg-blue-700">
+                                                Yes, reset loans
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <Tabs defaultValue="plans" className="w-full">
@@ -315,7 +445,6 @@ export default function SettingsPage() {
                 <TabsContent value="users" className="space-y-4 mt-6">
                     <div className="flex justify-between items-center">
                         <h2 className="text-xl font-semibold">Registered Users</h2>
-                        {/* Adding users via simple signup usually, so maybe no 'Add User' button here unless we implement Invite */}
                     </div>
 
                     <div className="rounded-md border bg-card">
