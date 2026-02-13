@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut } from "lucide-react";
+import { Menu, LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { useState } from "react";
 const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
     { icon: Users, label: "Borrowers", href: "/dashboard/borrowers" },
+    { icon: Briefcase, label: "Collectors", href: "/dashboard/collectors" },
     { icon: CreditCard, label: "Loans", href: "/dashboard/loans" },
     { icon: PieChart, label: "Reports", href: "/dashboard/reports" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },

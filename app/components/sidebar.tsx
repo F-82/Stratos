@@ -1,15 +1,17 @@
 "use client";
 
-import { LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
     { icon: Users, label: "Borrowers", href: "/dashboard/borrowers" },
+    { icon: Briefcase, label: "Collectors", href: "/dashboard/collectors" },
     { icon: CreditCard, label: "Loans", href: "/dashboard/loans" },
     { icon: PieChart, label: "Reports", href: "/dashboard/reports" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
@@ -19,6 +21,34 @@ export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
+    const [role, setRole] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function getRole() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Check metadata first
+                if (user.user_metadata?.role) {
+                    setRole(user.user_metadata.role);
+                } else {
+                    // Fallback to profiles
+                    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+                    if (data) setRole(data.role);
+                }
+            }
+            setLoading(false);
+        }
+        getRole();
+    }, []);
+
+    // Filter nav items based on role
+    const filteredNavItems = navItems.filter(item => {
+        if (item.href === '/dashboard/collectors' && role !== 'admin') {
+            return false;
+        }
+        return true;
+    });
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -31,13 +61,13 @@ export function Sidebar() {
             <div className="flex h-20 items-center px-6 border-b border-border/50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-light-blue to-medium-blue flex items-center justify-center shadow-sm">
-                        <svg 
-                            width="20" 
-                            height="20" 
+                        <svg
+                            width="20"
+                            height="20"
                             viewBox="0 0 100 100"
                         >
-                            <line x1="20" y1="50" x2="80" y2="50" stroke="white" strokeWidth="10" strokeLinecap="round"/>
-                            <line x1="50" y1="20" x2="50" y2="80" stroke="white" strokeWidth="10" strokeLinecap="round"/>
+                            <line x1="20" y1="50" x2="80" y2="50" stroke="white" strokeWidth="10" strokeLinecap="round" />
+                            <line x1="50" y1="20" x2="50" y2="80" stroke="white" strokeWidth="10" strokeLinecap="round" />
                         </svg>
                     </div>
                     <h1 className="text-xl font-bold tracking-tight text-foreground">Stratos</h1>
@@ -46,7 +76,7 @@ export function Sidebar() {
 
             {/* Navigation */}
             <div className="flex-1 space-y-1 px-4 py-6">
-                {navItems.map((item) => {
+                {!loading && filteredNavItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link

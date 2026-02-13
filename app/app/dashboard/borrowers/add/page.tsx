@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,18 @@ export default function AddBorrowerPage() {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [collectors, setCollectors] = useState<any[]>([]);
+
+    useEffect(() => {
+        async function fetchCollectors() {
+            const { data } = await supabase
+                .from("profiles")
+                .select("id, full_name")
+                .eq("role", "collector");
+            if (data) setCollectors(data);
+        }
+        fetchCollectors();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -22,6 +34,8 @@ export default function AddBorrowerPage() {
         setError(null);
 
         const formData = new FormData(e.currentTarget);
+        const collectorId = formData.get("collector_id") as string;
+
         const data = {
             full_name: formData.get("full_name") as string,
             nic_number: formData.get("nic_number") as string,
@@ -31,6 +45,7 @@ export default function AddBorrowerPage() {
             guarantor_phone: formData.get("guarantor_phone") as string,
             guarantor_nic: formData.get("guarantor_nic") as string,
             status: "active",
+            collector_id: collectorId || null,
         };
 
         const { error: insertError } = await supabase
@@ -51,8 +66,8 @@ export default function AddBorrowerPage() {
             {/* Page Header */}
             <div className="flex items-center gap-4">
                 <Link href="/dashboard/borrowers">
-                    <Button 
-                        variant="ghost" 
+                    <Button
+                        variant="ghost"
                         size="icon"
                         className="rounded-xl hover:bg-secondary transition-smooth"
                     >
@@ -85,15 +100,15 @@ export default function AddBorrowerPage() {
                                 <User className="w-4 h-4" />
                                 Personal Details
                             </h3>
-                            
+
                             <div className="grid gap-2">
                                 <label htmlFor="full_name" className="text-sm font-medium text-foreground">
                                     Full Name <span className="text-red-500">*</span>
                                 </label>
-                                <Input 
-                                    id="full_name" 
-                                    name="full_name" 
-                                    required 
+                                <Input
+                                    id="full_name"
+                                    name="full_name"
+                                    required
                                     placeholder="e.g. John Doe"
                                     className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                 />
@@ -105,10 +120,10 @@ export default function AddBorrowerPage() {
                                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                                         NIC Number <span className="text-red-500">*</span>
                                     </label>
-                                    <Input 
-                                        id="nic_number" 
-                                        name="nic_number" 
-                                        required 
+                                    <Input
+                                        id="nic_number"
+                                        name="nic_number"
+                                        required
                                         placeholder="e.g. 199012345678"
                                         className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                     />
@@ -118,10 +133,10 @@ export default function AddBorrowerPage() {
                                         <Phone className="w-4 h-4 text-muted-foreground" />
                                         Phone Number <span className="text-red-500">*</span>
                                     </label>
-                                    <Input 
-                                        id="phone" 
-                                        name="phone" 
-                                        required 
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        required
                                         placeholder="e.g. 0771234567"
                                         className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                     />
@@ -133,13 +148,32 @@ export default function AddBorrowerPage() {
                                     <MapPin className="w-4 h-4 text-muted-foreground" />
                                     Address <span className="text-red-500">*</span>
                                 </label>
-                                <Input 
-                                    id="address" 
-                                    name="address" 
-                                    required 
+                                <Input
+                                    id="address"
+                                    name="address"
+                                    required
                                     placeholder="Full residential address"
                                     className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                 />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="collector_id" className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-muted-foreground" />
+                                    Assign Collector (Optional)
+                                </label>
+                                <select
+                                    id="collector_id"
+                                    name="collector_id"
+                                    className="flex h-12 w-full items-center justify-between rounded-xl border border-border/50 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">-- No Collector Assigned --</option>
+                                    {collectors.map(c => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.full_name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -149,27 +183,27 @@ export default function AddBorrowerPage() {
                                 <Users className="w-4 h-4" />
                                 Guarantor Details (Optional)
                             </h3>
-                            
+
                             <div className="grid gap-2">
                                 <label htmlFor="guarantor_name" className="text-sm font-medium text-foreground">
                                     Guarantor Name
                                 </label>
-                                <Input 
-                                    id="guarantor_name" 
-                                    name="guarantor_name" 
+                                <Input
+                                    id="guarantor_name"
+                                    name="guarantor_name"
                                     placeholder="Name of guarantor"
                                     className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                 />
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <label htmlFor="guarantor_nic" className="text-sm font-medium text-foreground">
                                         Guarantor NIC
                                     </label>
-                                    <Input 
-                                        id="guarantor_nic" 
-                                        name="guarantor_nic" 
+                                    <Input
+                                        id="guarantor_nic"
+                                        name="guarantor_nic"
                                         placeholder="Guarantor NIC"
                                         className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                     />
@@ -178,9 +212,9 @@ export default function AddBorrowerPage() {
                                     <label htmlFor="guarantor_phone" className="text-sm font-medium text-foreground">
                                         Guarantor Phone
                                     </label>
-                                    <Input 
-                                        id="guarantor_phone" 
-                                        name="guarantor_phone" 
+                                    <Input
+                                        id="guarantor_phone"
+                                        name="guarantor_phone"
                                         placeholder="Guarantor Phone"
                                         className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                     />
@@ -192,17 +226,17 @@ export default function AddBorrowerPage() {
                         {error && (
                             <div className="rounded-xl bg-red-500/10 backdrop-blur-sm border border-red-500/30 p-4 text-sm text-red-600">
                                 <div className="flex items-center gap-2">
-                                    <svg 
-                                        width="16" 
-                                        height="16" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
                                         strokeWidth="2"
                                     >
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="8" x2="12" y2="12"/>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                        <line x1="12" y1="16" x2="12.01" y2="16" />
                                     </svg>
                                     {error}
                                 </div>
@@ -211,29 +245,29 @@ export default function AddBorrowerPage() {
 
                         {/* Submit Button */}
                         <div className="flex justify-end pt-6 border-t border-border/50">
-                            <Button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={loading}
                                 className="rounded-full px-8 py-6 bg-gradient-to-r from-light-blue to-medium-blue hover:shadow-glow transition-smooth shadow-medium w-full sm:w-auto"
                             >
                                 {loading ? (
                                     <>
-                                        <svg 
-                                            className="animate-spin h-5 w-5 mr-2" 
+                                        <svg
+                                            className="animate-spin h-5 w-5 mr-2"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                         >
-                                            <circle 
-                                                className="opacity-25" 
-                                                cx="12" 
-                                                cy="12" 
-                                                r="10" 
-                                                stroke="currentColor" 
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
                                                 strokeWidth="4"
                                             />
-                                            <path 
-                                                className="opacity-75" 
-                                                fill="currentColor" 
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                             />
                                         </svg>
