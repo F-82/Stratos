@@ -4,20 +4,8 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-// Initialize Admin Client
-const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-        },
-    }
-);
-
-// Helper to check admin
-async function checkAdmin() {
+// Helper to check admin and return initialized admin client
+async function getAdminClient() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
@@ -28,11 +16,24 @@ async function checkAdmin() {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
         if (profile?.role !== 'admin') throw new Error("Unauthorized: Admin access required");
     }
+
+    // Initialize Admin Client dynamically inside the function
+    // to prevent build-time crashes if ENV vars are missing during pre-rendering
+    return createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            },
+        }
+    );
 }
 
 export async function resetCollectors() {
     try {
-        await checkAdmin();
+        const supabaseAdmin = await getAdminClient();
 
         // 1. Get all collectors
         const { data: collectors, error: fetchError } = await supabaseAdmin
@@ -48,10 +49,7 @@ export async function resetCollectors() {
 
         const collectorIds = collectors.map(c => c.id);
 
-        // 2. Delete from auth.users (cascades to profiles usually, but we handle explicit).
-        // Deleting user from auth.users is the main thing.
-        // It should cascade to profiles if set up, but let's be sure.
-
+        // 2. Delete from auth.users (cascades to profiles typically).
         const errors = [];
         for (const id of collectorIds) {
             const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(id);
@@ -76,10 +74,9 @@ export async function resetCollectors() {
 
 export async function resetBorrowers() {
     try {
-        await checkAdmin();
+        const supabaseAdmin = await getAdminClient();
 
         // Delete all borrowers
-        // Using .gt to filter all valid UUIDs is a safe way to 'delete all'
         const { error: deleteError } = await supabaseAdmin
             .from("borrowers")
             .delete()
@@ -99,7 +96,7 @@ export async function resetBorrowers() {
 
 export async function resetLoans() {
     try {
-        await checkAdmin();
+        const supabaseAdmin = await getAdminClient();
 
         // 1. Delete Payments first (integrity)
         const { error: paymentsError } = await supabaseAdmin
