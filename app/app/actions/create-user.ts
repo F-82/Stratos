@@ -93,7 +93,15 @@ export async function createUser(formData: FormData) {
         return { success: true, message: "Collector created successfully" };
 
     } catch (error: any) {
-        console.error("Create User Error:", error);
-        return { error: error.message };
+        console.error("=== Create User Error Details ===");
+        console.error("Name:", error.name);
+        console.error("Message:", error.message);
+        console.error("Code:", error.code);
+        console.error("Details:", error.details);
+        console.error("Hint:", error.hint);
+        console.error("Full Error Object:", JSON.stringify(error, null, 2));
+
+        // Return exact error string for debugging
+        return { error: `ERROR: ${error.message || JSON.stringify(error)}` };
     }
 }

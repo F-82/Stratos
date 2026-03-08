@@ -107,9 +107,9 @@ export default function CollectorsPage() {
                 fetchCollectors(); // Refresh list
                 // form reset happens automatically if we close/unmount or we can reset explicit
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Submission error:", error);
-            toast.error("An unexpected error occurred");
+            toast.error(error.message || "Client Catch: An unexpected error occurred");
         } finally {
             setIsSubmitting(false);
         }
