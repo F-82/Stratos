@@ -110,7 +110,7 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-6xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Loan Details</DialogTitle>
+                    <DialogTitle>Loan {loan ? `#${loan.loan_number || loan.id.slice(0, 8)}` : 'Details'}</DialogTitle>
                 </DialogHeader>
 
                 {loading || !loan ? (

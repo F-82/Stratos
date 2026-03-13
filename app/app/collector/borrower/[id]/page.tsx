@@ -37,7 +37,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             // Fetch loan with duration details
             const { data: lData } = await supabase
                 .from("loans")
-                .select("*, plan:loan_plans(name, installment_amount, duration_months)")
+                .select("*, loan_number, plan:loan_plans(name, installment_amount, duration_months)")
                 .eq("borrower_id", id)
                 .eq("status", "active");
 
@@ -120,7 +120,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             ["Date", new Date().toLocaleDateString()],
             ["Borrower", borrower.full_name],
             ["NIC", borrower.nic_number],
-            ["Loan ID", selectedLoan.id.slice(0, 8)],
+            ["Loan ID", `#${selectedLoan.loan_number || selectedLoan.id.slice(0, 8)}`],
             ["Installment", `#${lastPayment.installment_number}`],
             ["Amount Paid", `LKR ${parseFloat(lastPayment.amount).toLocaleString()}`],
             ["Collector", "Agent"]

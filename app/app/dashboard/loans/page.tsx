@@ -13,6 +13,7 @@ import { LoanDetailsDialog } from "@/components/loan-details-dialog";
 
 interface Loan {
     id: string;
+    loan_number?: string;
     borrower: { full_name: string };
     plan: { name: string };
     principal_amount: number;
@@ -35,6 +36,7 @@ export default function LoansPage() {
                 .from("loans")
                 .select(`
           id,
+          loan_number,
           principal_amount,
           status,
           start_date,
@@ -223,6 +225,11 @@ export default function LoansPage() {
                                 <TableRow key={loan.id} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
                                     <TableCell className="font-semibold text-foreground">
                                         {loan.borrower?.full_name || 'Unknown'}
+                                        {loan.loan_number && (
+                                            <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                                                #{loan.loan_number}
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-muted-foreground font-medium">
                                         {loan.plan?.name || 'Custom'}
