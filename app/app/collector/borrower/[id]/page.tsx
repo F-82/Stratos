@@ -83,6 +83,16 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             setLastPayment(data);
             setPaidCount(prev => prev + 1); // Increment locally to update UI
 
+            // Auto-mark today's task as completed (if one exists)
+            const todayStr = new Date().toISOString().split("T")[0];
+            await supabase
+                .from("daily_tasks")
+                .update({ status: "completed" })
+                .eq("loan_id", selectedLoan.id)
+                .eq("collector_id", user?.id)
+                .eq("task_date", todayStr)
+                .eq("status", "pending");
+
             // Check if this was the last payment
             const totalSegments = selectedLoan.plan.duration_months;
             if (currentInstallmentNumber >= totalSegments) {

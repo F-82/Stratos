@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut, Briefcase } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, PieChart, Settings, LogOut, Briefcase, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
     { icon: Users, label: "Borrowers", href: "/dashboard/borrowers" },
     { icon: Briefcase, label: "Collectors", href: "/dashboard/collectors" },
+    { icon: Map, label: "Routes", href: "/dashboard/routes" },
     { icon: CreditCard, label: "Loans", href: "/dashboard/loans" },
     { icon: PieChart, label: "Reports", href: "/dashboard/reports" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
@@ -44,7 +45,7 @@ export function Sidebar() {
 
     // Filter nav items based on role
     const filteredNavItems = navItems.filter(item => {
-        if (item.href === '/dashboard/collectors' && role !== 'admin') {
+        if ((item.href === '/dashboard/collectors' || item.href === '/dashboard/routes') && role !== 'admin') {
             return false;
         }
         return true;

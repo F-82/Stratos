@@ -35,9 +35,6 @@ export default function DashboardPage() {
 
             // 1. Fetch Payments (for Total Collected + Trend)
             let paymentsQuery = supabase.from("payments").select("amount, created_at");
-            if (isCollector) {
-                paymentsQuery = paymentsQuery.eq("collector_id", user.id);
-            }
             const { data: payments } = await paymentsQuery;
 
             const totalCollected = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
@@ -100,22 +97,6 @@ export default function DashboardPage() {
 
             // Filter inputs
             let loansQuery = supabase.from("loans").select("id, principal_amount, installment_amount, status, created_at");
-
-            if (isCollector) {
-                // Get borrowers first
-                const { data: myBorrowers } = await supabase
-                    .from("borrowers")
-                    .select("id")
-                    .eq("collector_id", user.id);
-                const borrowerIds = myBorrowers?.map(b => b.id) || [];
-
-                if (borrowerIds.length > 0) {
-                    loansQuery = loansQuery.in("borrower_id", borrowerIds);
-                } else {
-                    // No borrowers -> No loans
-                    loansQuery = null as any;
-                }
-            }
 
             if (loansQuery) {
                 const { data: loans } = await loansQuery;
