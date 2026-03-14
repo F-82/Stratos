@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, DollarSign, TrendingUp, CheckCircle, Search, Filter } from "lucide-react";
+import { Plus, Eye, DollarSign, TrendingUp, CheckCircle, Search, Filter, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MotionContainer } from "@/components/motion-container";
 import { LoanDetailsDialog } from "@/components/loan-details-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Loan {
     id: string;
@@ -27,6 +29,8 @@ export default function LoansPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [deleteTarget, setDeleteTarget] = useState<Loan | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
@@ -68,6 +72,25 @@ export default function LoansPage() {
     const totalPrincipal = loans.reduce((sum, loan) => sum + loan.principal_amount, 0);
     const activeLoans = loans.filter(l => l.status === 'active').length;
     const completedLoans = loans.filter(l => l.status === 'completed').length;
+
+    const handleDeleteLoan = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            // Delete payments and daily_tasks first
+            await supabase.from('payments').delete().eq('loan_id', deleteTarget.id);
+            await supabase.from('daily_tasks').delete().eq('loan_id', deleteTarget.id);
+            const { error } = await supabase.from('loans').delete().eq('id', deleteTarget.id);
+            if (error) throw error;
+            toast.success('Loan deleted successfully.');
+            setDeleteTarget(null);
+            setLoans(prev => prev.filter(l => l.id !== deleteTarget.id));
+        } catch (err: any) {
+            toast.error('Failed to delete loan: ' + err.message);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <MotionContainer className="space-y-6">
@@ -251,7 +274,17 @@ export default function LoansPage() {
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <LoanDetailsDialog loanId={loan.id} />
+                                        <div className="flex items-center justify-end gap-1">
+                                            <LoanDetailsDialog loanId={loan.id} />
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                                                onClick={() => setDeleteTarget(loan)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -259,6 +292,29 @@ export default function LoansPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Delete Loan Confirmation */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Loan?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the loan for <strong>{deleteTarget?.borrower?.full_name}</strong> along with all associated payment records.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteLoan}
+                            disabled={isDeleting}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                        >
+                            {isDeleting ? "Deleting..." : "Yes, Delete Loan"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </MotionContainer>
     );
 }

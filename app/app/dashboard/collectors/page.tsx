@@ -5,29 +5,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MotionContainer } from "@/components/motion-container";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogDescription, DialogFooter,
+    DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, User, Shield, Briefcase, Phone, Mail, Loader2 } from "lucide-react";
+import { Plus, User, Shield, Briefcase, Phone, Mail, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { createUser } from "@/app/actions/create-user"; // Import Server Action
+import { createUser } from "@/app/actions/create-user";
 
 interface CollectorProfile {
     id: string;
@@ -35,39 +29,32 @@ interface CollectorProfile {
     email: string;
     role: string;
     created_at?: string;
-    // Add phone if available in schema, otherwise we might just store it in metadata or separate column
 }
 
 export default function CollectorsPage() {
     const supabase = createClient();
     const [collectors, setCollectors] = useState<CollectorProfile[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Form State
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // We'll use native form action or explicit handler? Explicit handler gives more control over loading state/toasts easily.
-
-    const router = useRouter(); // Add useRouter
+    const [deleteTarget, setDeleteTarget] = useState<CollectorProfile | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         async function init() {
             setLoading(true);
             const { data: { user } } = await supabase.auth.getUser();
-
-            // Check role for access control
             let role = user?.user_metadata?.role;
             if (!role && user) {
                 const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
                 role = profile?.role;
             }
-
             if (role !== 'admin') {
                 toast.error("Unauthorized access");
-                router.push("/dashboard"); // Redirect to dashboard
+                router.push("/dashboard");
                 return;
             }
-
             fetchCollectors();
         }
         init();
@@ -78,11 +65,9 @@ export default function CollectorsPage() {
         const { data, error } = await supabase
             .from("profiles")
             .select("*")
-            .eq("role", "collector") // Filter by role
+            .eq("role", "collector")
             .order("created_at", { ascending: false });
-
         if (error) {
-            console.error("Error fetching collectors:", error);
             toast.error("Failed to load collectors");
         } else {
             setCollectors(data || []);
@@ -93,25 +78,51 @@ export default function CollectorsPage() {
     const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
-
         const formData = new FormData(e.currentTarget);
-
         try {
             const result = await createUser(formData);
-
             if (result.error) {
                 toast.error(result.error);
             } else {
                 toast.success(result.message);
                 setIsAddOpen(false);
-                fetchCollectors(); // Refresh list
-                // form reset happens automatically if we close/unmount or we can reset explicit
+                fetchCollectors();
             }
         } catch (error: any) {
-            console.error("Submission error:", error);
-            toast.error(error.message || "Client Catch: An unexpected error occurred");
+            toast.error(error.message || "An unexpected error occurred");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteCollector = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            // Delete from Supabase Auth (this cascades to profiles via DB trigger/FK)
+            const response = await fetch('/api/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: deleteTarget.id }),
+            });
+
+            // Fallback: delete profile directly if no API route
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', deleteTarget.id);
+
+            if (profileError) {
+                toast.error("Failed to delete collector: " + profileError.message);
+            } else {
+                toast.success(`${deleteTarget.full_name} has been removed.`);
+                setDeleteTarget(null);
+                fetchCollectors();
+            }
+        } catch (err: any) {
+            toast.error("Failed to delete collector");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -120,23 +131,18 @@ export default function CollectorsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Collectors</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Manage your field collection team.
-                    </p>
+                    <p className="text-muted-foreground mt-2">Manage your field collection team.</p>
                 </div>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
                         <Button className="gap-2 bg-medium-blue hover:bg-medium-blue/90">
-                            <Plus className="h-4 w-4" />
-                            Add Collector
+                            <Plus className="h-4 w-4" />Add Collector
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Add New Collector</DialogTitle>
-                            <DialogDescription>
-                                Create a new account for a field collector. They will use these credentials to log in.
-                            </DialogDescription>
+                            <DialogDescription>Create a new account for a field collector.</DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleCreateSubmit} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -155,17 +161,9 @@ export default function CollectorsPage() {
                                 <Label htmlFor="password">Password</Label>
                                 <Input id="password" name="password" type="password" placeholder="••••••••" required minLength={6} />
                             </div>
-
                             <DialogFooter>
                                 <Button type="submit" disabled={isSubmitting} className="w-full">
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Creating...
-                                        </>
-                                    ) : (
-                                        "Create Account"
-                                    )}
+                                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : "Create Account"}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -190,11 +188,10 @@ export default function CollectorsPage() {
                             </TableRow>
                         ) : collectors.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-32 text-center flex-col items-center justify-center">
+                                <TableCell colSpan={4} className="h-32 text-center">
                                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                                         <Briefcase className="h-8 w-8 mb-2 opacity-50" />
-                                        <p>No collectors found.</p>
-                                        <p className="text-sm">Add one to get started.</p>
+                                        <p>No collectors found. Add one to get started.</p>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -213,20 +210,24 @@ export default function CollectorsPage() {
                                     <TableCell>
                                         <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                                             <div className="flex items-center gap-2">
-                                                <Mail className="h-3.5 w-3.5" />
-                                                {collector.email}
+                                                <Mail className="h-3.5 w-3.5" />{collector.email}
                                             </div>
-                                            {/* Phone would go here if we fetch it */}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-500/10 px-2 py-1 rounded-full w-fit">
-                                            <Shield className="h-3 w-3" />
-                                            Active
+                                            <Shield className="h-3 w-3" />Active
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm">Edit</Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => setDeleteTarget(collector)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -234,6 +235,29 @@ export default function CollectorsPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Collector?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently remove <strong>{deleteTarget?.full_name}</strong>'s account.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteCollector}
+                            disabled={isDeleting}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                        >
+                            {isDeleting ? "Deleting..." : "Yes, Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </MotionContainer>
     );
 }

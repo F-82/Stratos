@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, Phone, CreditCard, Search } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Eye, Phone, CreditCard, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MotionContainer } from "@/components/motion-container";
+import { toast } from "sonner";
 
 interface Borrower {
     id: string;
@@ -31,6 +33,8 @@ export default function BorrowersPage() {
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(null);
     const [selectedCollectorId, setSelectedCollectorId] = useState<string>("");
+    const [deleteTarget, setDeleteTarget] = useState<Borrower | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -98,12 +102,40 @@ export default function BorrowersPage() {
             .eq("id", selectedBorrower.id);
 
         if (error) {
-            console.error("Error assigning collector:", error);
-            // toast error
+            toast.error("Error assigning collector");
         } else {
-            // toast success
             setAssignDialogOpen(false);
-            fetchData(); // Refresh data
+            fetchData();
+        }
+    };
+
+    const handleDeleteBorrower = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            // 1. Get all loans for this borrower
+            const { data: loanData } = await supabase
+                .from('loans').select('id').eq('borrower_id', deleteTarget.id);
+            const loanIds = loanData?.map(l => l.id) || [];
+
+            // 2. Delete payments on those loans
+            if (loanIds.length > 0) {
+                await supabase.from('payments').delete().in('loan_id', loanIds);
+                await supabase.from('daily_tasks').delete().in('loan_id', loanIds);
+                await supabase.from('loans').delete().in('id', loanIds);
+            }
+
+            // 3. Delete the borrower
+            const { error } = await supabase.from('borrowers').delete().eq('id', deleteTarget.id);
+            if (error) throw error;
+
+            toast.success(`${deleteTarget.full_name} and all their loans have been deleted.`);
+            setDeleteTarget(null);
+            fetchData();
+        } catch (err: any) {
+            toast.error('Failed to delete borrower: ' + err.message);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -281,14 +313,19 @@ export default function BorrowersPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="rounded-xl hover:bg-secondary transition-smooth"
-                                        >
-                                            <Eye className="mr-2 h-4 w-4" />
-                                            View
-                                        </Button>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button variant="ghost" size="sm" className="rounded-xl hover:bg-secondary transition-smooth">
+                                                <Eye className="mr-2 h-4 w-4" />View
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                                                onClick={() => setDeleteTarget(borrower)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -327,6 +364,29 @@ export default function BorrowersPage() {
                     </div>
                 </div>
             )}
+
+            {/* Delete Borrower Confirmation */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Borrower?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete <strong>{deleteTarget?.full_name}</strong>, along with all their loans and payment history.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteBorrower}
+                            disabled={isDeleting}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                        >
+                            {isDeleting ? "Deleting..." : "Yes, Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </MotionContainer>
     );
 }
