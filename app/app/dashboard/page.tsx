@@ -15,6 +15,8 @@ export default function DashboardPage() {
         collectedToday: 0,
         expectedNextMonth: 0,
         onTimeRate: 0,
+        plannedToday: 0,
+        completedToday: 0,
         trendData: [] as { month: string, amount: number }[],
         trendGrowth: 0
     });
@@ -148,6 +150,15 @@ export default function DashboardPage() {
                 }
             }
 
+            // 3. Fetch Daily Tasks for today's efficiency
+            const { data: tasks } = await supabase
+                .from("daily_tasks")
+                .select("status")
+                .eq("task_date", todayStr);
+
+            const plannedToday = tasks?.length || 0;
+            const completedToday = tasks?.filter(t => t.status === 'completed').length || 0;
+
             setMetrics({
                 totalCollected,
                 totalOutstanding: totalPrincipalActive,
@@ -155,6 +166,8 @@ export default function DashboardPage() {
                 collectedToday,
                 expectedNextMonth,
                 onTimeRate,
+                plannedToday,
+                completedToday,
                 trendData,
                 trendGrowth
             });
@@ -204,24 +217,31 @@ export default function DashboardPage() {
 
                     {/* Side Statistics */}
                     <div className="space-y-6">
-                        {/* On-Time Rate Card */}
+                        {/* On-Time Rate Card Redesigned as Collection Efficiency */}
                         <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-soft hover-lift transition-smooth">
                             <h3 className="text-sm font-medium text-muted-foreground mb-6 uppercase tracking-wider">
-                                Collection Efficiency
+                                Today's Efficiency
                             </h3>
                             <div className="space-y-4">
                                 <div className="flex items-end justify-between">
-                                    <span className="text-5xl font-bold text-foreground">{Math.round(metrics.onTimeRate)}%</span>
-                                    <span className="text-sm text-muted-foreground">{100 - Math.round(metrics.onTimeRate)}% gap</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-5xl font-bold text-foreground">
+                                            {metrics.completedToday}<span className="text-2xl text-muted-foreground ml-1">/ {metrics.plannedToday}</span>
+                                        </span>
+                                        <span className="text-xs text-muted-foreground mt-1">Installments collected</span>
+                                    </div>
+                                    <span className="text-sm font-semibold text-medium-blue">
+                                        {metrics.plannedToday > 0 ? Math.round((metrics.completedToday / metrics.plannedToday) * 100) : 0}%
+                                    </span>
                                 </div>
                                 <div className="w-full bg-secondary rounded-full h-3 overflow-hidden shadow-inner">
                                     <div
-                                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full shadow-sm transition-all"
-                                        style={{ width: `${metrics.onTimeRate}%` }}
+                                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full shadow-sm transition-all duration-1000"
+                                        style={{ width: `${metrics.plannedToday > 0 ? (metrics.completedToday / metrics.plannedToday) * 100 : 0}%` }}
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Based on {metrics.activeLoans} active loans
+                                    Based on {metrics.plannedToday} planned visits for today
                                 </p>
                             </div>
                         </div>

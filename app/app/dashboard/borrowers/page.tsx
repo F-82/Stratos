@@ -20,6 +20,18 @@ interface Borrower {
     address: string;
     status: string;
     collector_id?: string;
+    guarantor_name?: string;
+    guarantor_phone?: string;
+    guarantor_nic?: string;
+    guarantor_address?: string;
+    guarantor2_name?: string;
+    guarantor2_phone?: string;
+    guarantor2_nic?: string;
+    guarantor2_address?: string;
+    spouse_name?: string;
+    spouse_phone?: string;
+    spouse_nic?: string;
+    spouse_address?: string;
 }
 
 export default function BorrowersPage() {

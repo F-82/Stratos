@@ -44,6 +44,15 @@ export default function AddBorrowerPage() {
             guarantor_name: formData.get("guarantor_name") as string,
             guarantor_phone: formData.get("guarantor_phone") as string,
             guarantor_nic: formData.get("guarantor_nic") as string,
+            guarantor_address: formData.get("guarantor_address") as string,
+            guarantor2_name: formData.get("guarantor2_name") as string,
+            guarantor2_phone: formData.get("guarantor2_phone") as string,
+            guarantor2_nic: formData.get("guarantor2_nic") as string,
+            guarantor2_address: formData.get("guarantor2_address") as string,
+            spouse_name: formData.get("spouse_name") as string,
+            spouse_phone: formData.get("spouse_phone") as string,
+            spouse_nic: formData.get("spouse_nic") as string,
+            spouse_address: formData.get("spouse_address") as string,
             status: "active",
             collector_id: collectorId || null,
         };
@@ -177,11 +186,11 @@ export default function AddBorrowerPage() {
                             </div>
                         </div>
 
-                        {/* Guarantor Information Section */}
+                        {/* Guarantor 1 Information Section */}
                         <div className="space-y-5 pt-6 border-t border-border/50">
                             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <Users className="w-4 h-4" />
-                                Guarantor Details (Optional)
+                                Guarantor 1 Details (Optional)
                             </h3>
 
                             <div className="grid gap-2">
@@ -219,6 +228,132 @@ export default function AddBorrowerPage() {
                                         className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="guarantor_address" className="text-sm font-medium text-foreground">
+                                    Guarantor Address
+                                </label>
+                                <Input
+                                    id="guarantor_address"
+                                    name="guarantor_address"
+                                    placeholder="Guarantor Address"
+                                    className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Guarantor 2 Information Section */}
+                        <div className="space-y-5 pt-6 border-t border-border/50">
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <Users className="w-4 h-4" />
+                                Guarantor 2 Details (Optional)
+                            </h3>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="guarantor2_name" className="text-sm font-medium text-foreground">
+                                    Guarantor Name
+                                </label>
+                                <Input
+                                    id="guarantor2_name"
+                                    name="guarantor2_name"
+                                    placeholder="Name of second guarantor"
+                                    className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <label htmlFor="guarantor2_nic" className="text-sm font-medium text-foreground">
+                                        Guarantor NIC
+                                    </label>
+                                    <Input
+                                        id="guarantor2_nic"
+                                        name="guarantor2_nic"
+                                        placeholder="Guarantor NIC"
+                                        className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="guarantor2_phone" className="text-sm font-medium text-foreground">
+                                        Guarantor Phone
+                                    </label>
+                                    <Input
+                                        id="guarantor2_phone"
+                                        name="guarantor2_phone"
+                                        placeholder="Guarantor Phone"
+                                        className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="guarantor2_address" className="text-sm font-medium text-foreground">
+                                    Guarantor Address
+                                </label>
+                                <Input
+                                    id="guarantor2_address"
+                                    name="guarantor2_address"
+                                    placeholder="Guarantor Address"
+                                    className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Spouse Information Section */}
+                        <div className="space-y-5 pt-6 border-t border-border/50">
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                Spouse Details (Optional)
+                            </h3>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="spouse_name" className="text-sm font-medium text-foreground">
+                                    Spouse Name
+                                </label>
+                                <Input
+                                    id="spouse_name"
+                                    name="spouse_name"
+                                    placeholder="Name of spouse"
+                                    className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <label htmlFor="spouse_nic" className="text-sm font-medium text-foreground">
+                                        Spouse NIC
+                                    </label>
+                                    <Input
+                                        id="spouse_nic"
+                                        name="spouse_nic"
+                                        placeholder="Spouse NIC"
+                                        className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="spouse_phone" className="text-sm font-medium text-foreground">
+                                        Spouse Phone
+                                    </label>
+                                    <Input
+                                        id="spouse_phone"
+                                        name="spouse_phone"
+                                        placeholder="Spouse Phone"
+                                        className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label htmlFor="spouse_address" className="text-sm font-medium text-foreground">
+                                    Spouse Address
+                                </label>
+                                <Input
+                                    id="spouse_address"
+                                    name="spouse_address"
+                                    placeholder="Spouse Address"
+                                    className="rounded-xl border-border/50 focus:border-medium-blue transition-smooth h-12"
+                                />
                             </div>
                         </div>
 
