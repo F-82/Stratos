@@ -25,31 +25,25 @@ export function MobileNav() {
     const router = useRouter();
     const supabase = createClient();
     const [open, setOpen] = useState(false);
-    const [role, setRole] = useState<string | null>(null);
+    const [role, setRole] = useState<string>('admin');
 
     useEffect(() => {
         async function getRole() {
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
-                if (profile?.role) {
-                    setRole(profile.role);
-                } else if (user.user_metadata?.role) {
-                    setRole(user.user_metadata.role);
-                } else {
-                    setRole('admin');
-                }
-            }
+            if (!user) return;
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+            const resolvedRole = profile?.role || user.user_metadata?.role || 'admin';
+            setRole(resolvedRole);
         }
         getRole();
     }, []);
 
     const filteredNavItems = navItems.filter(item => {
-        if ((item as any).adminOnly && role !== null && role !== 'admin') return false;
+        if ((item as any).adminOnly && role === 'collector') return false;
         return true;
     });
 

@@ -9,53 +9,44 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 const navItems = [
-    { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
-    { icon: Users, label: "Borrowers", href: "/dashboard/borrowers" },
-    { icon: Briefcase, label: "Collectors", href: "/dashboard/collectors" },
-    { icon: Map, label: "Routes", href: "/dashboard/routes" },
-    { icon: CreditCard, label: "Loans", href: "/dashboard/loans" },
-    { icon: PieChart, label: "Reports", href: "/dashboard/reports" },
-    { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+    { icon: LayoutDashboard, label: "Overview", href: "/dashboard", adminOnly: false },
+    { icon: Users, label: "Borrowers", href: "/dashboard/borrowers", adminOnly: false },
+    { icon: Briefcase, label: "Collectors", href: "/dashboard/collectors", adminOnly: true },
+    { icon: Map, label: "Routes", href: "/dashboard/routes", adminOnly: true },
+    { icon: CreditCard, label: "Loans", href: "/dashboard/loans", adminOnly: false },
+    { icon: PieChart, label: "Reports", href: "/dashboard/reports", adminOnly: false },
+    { icon: Settings, label: "Settings", href: "/dashboard/settings", adminOnly: false },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
-    const [role, setRole] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Default to 'admin' so ALL items are visible immediately on render.
+    // Only flips to 'collector' if the profile query explicitly confirms it.
+    const [role, setRole] = useState<string>('admin');
 
     useEffect(() => {
         async function getRole() {
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                // Always use profiles table as source of truth 
-                // (user_metadata can be stale/wrong for manually created accounts)
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
-                if (profile?.role) {
-                    setRole(profile.role);
-                } else if (user.user_metadata?.role) {
-                    // Fallback to metadata if profile fetch returned nothing
-                    setRole(user.user_metadata.role);
-                } else {
-                    // If all else fails, show all items safely
-                    setRole('admin');
-                }
-            }
-            setLoading(false);
+            if (!user) return;
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            // Use profiles table first, then metadata, then default to 'admin'
+            const resolvedRole = profile?.role || user.user_metadata?.role || 'admin';
+            setRole(resolvedRole);
         }
         getRole();
     }, []);
 
-    // Filter nav items based on role — only filter once role is resolved (not null)
+    // Only hide admin-only items when role is EXPLICITLY 'collector'
     const filteredNavItems = navItems.filter(item => {
-        if ((item.href === '/dashboard/collectors' || item.href === '/dashboard/routes') && role !== null && role !== 'admin') {
-            return false;
-        }
+        if (item.adminOnly && role === 'collector') return false;
         return true;
     });
 
@@ -70,11 +61,7 @@ export function Sidebar() {
             <div className="flex h-20 items-center px-6 border-b border-border/50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-light-blue to-medium-blue flex items-center justify-center shadow-sm">
-                        <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 100 100"
-                        >
+                        <svg width="20" height="20" viewBox="0 0 100 100">
                             <line x1="20" y1="50" x2="80" y2="50" stroke="white" strokeWidth="10" strokeLinecap="round" />
                             <line x1="50" y1="20" x2="50" y2="80" stroke="white" strokeWidth="10" strokeLinecap="round" />
                         </svg>
@@ -85,7 +72,7 @@ export function Sidebar() {
 
             {/* Navigation */}
             <div className="flex-1 space-y-1 px-4 py-6">
-                {!loading && filteredNavItems.map((item) => {
+                {filteredNavItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
