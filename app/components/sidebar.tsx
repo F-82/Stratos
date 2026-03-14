@@ -43,9 +43,9 @@ export function Sidebar() {
         getRole();
     }, []);
 
-    // Filter nav items based on role
+    // Filter nav items based on role — only filter once role is resolved (not null)
     const filteredNavItems = navItems.filter(item => {
-        if ((item.href === '/dashboard/collectors' || item.href === '/dashboard/routes') && role !== 'admin') {
+        if ((item.href === '/dashboard/collectors' || item.href === '/dashboard/routes') && role !== null && role !== 'admin') {
             return false;
         }
         return true;

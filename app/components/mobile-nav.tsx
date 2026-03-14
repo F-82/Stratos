@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
@@ -25,6 +25,27 @@ export function MobileNav() {
     const router = useRouter();
     const supabase = createClient();
     const [open, setOpen] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function getRole() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                if (user.user_metadata?.role) {
+                    setRole(user.user_metadata.role);
+                } else {
+                    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+                    if (data) setRole(data.role);
+                }
+            }
+        }
+        getRole();
+    }, []);
+
+    const filteredNavItems = navItems.filter(item => {
+        if ((item as any).adminOnly && role !== null && role !== 'admin') return false;
+        return true;
+    });
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -60,7 +81,7 @@ export function MobileNav() {
                 </SheetHeader>
 
                 <div className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
-                    {navItems.map((item) => {
+                    {filteredNavItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <Link
