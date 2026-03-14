@@ -22,6 +22,7 @@ import { Plus, User, Shield, Briefcase, Phone, Mail, Loader2, Trash2 } from "luc
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { createUser } from "@/app/actions/create-user";
+import { deleteCollector } from "@/app/actions/delete-records";
 
 interface CollectorProfile {
     id: string;
@@ -99,21 +100,9 @@ export default function CollectorsPage() {
         if (!deleteTarget) return;
         setIsDeleting(true);
         try {
-            // Delete from Supabase Auth (this cascades to profiles via DB trigger/FK)
-            const response = await fetch('/api/delete-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: deleteTarget.id }),
-            });
-
-            // Fallback: delete profile directly if no API route
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', deleteTarget.id);
-
-            if (profileError) {
-                toast.error("Failed to delete collector: " + profileError.message);
+            const result = await deleteCollector(deleteTarget.id);
+            if (result.error) {
+                toast.error(result.error);
             } else {
                 toast.success(`${deleteTarget.full_name} has been removed.`);
                 setDeleteTarget(null);

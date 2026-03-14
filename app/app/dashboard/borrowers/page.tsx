@@ -10,6 +10,7 @@ import { Plus, Eye, Phone, CreditCard, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MotionContainer } from "@/components/motion-container";
 import { toast } from "sonner";
+import { deleteBorrower } from "@/app/actions/delete-records";
 
 interface Borrower {
     id: string;
@@ -113,25 +114,14 @@ export default function BorrowersPage() {
         if (!deleteTarget) return;
         setIsDeleting(true);
         try {
-            // 1. Get all loans for this borrower
-            const { data: loanData } = await supabase
-                .from('loans').select('id').eq('borrower_id', deleteTarget.id);
-            const loanIds = loanData?.map(l => l.id) || [];
-
-            // 2. Delete payments on those loans
-            if (loanIds.length > 0) {
-                await supabase.from('payments').delete().in('loan_id', loanIds);
-                await supabase.from('daily_tasks').delete().in('loan_id', loanIds);
-                await supabase.from('loans').delete().in('id', loanIds);
+            const result = await deleteBorrower(deleteTarget.id);
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success(`${deleteTarget.full_name} and all their loans have been deleted.`);
+                setDeleteTarget(null);
+                fetchData();
             }
-
-            // 3. Delete the borrower
-            const { error } = await supabase.from('borrowers').delete().eq('id', deleteTarget.id);
-            if (error) throw error;
-
-            toast.success(`${deleteTarget.full_name} and all their loans have been deleted.`);
-            setDeleteTarget(null);
-            fetchData();
         } catch (err: any) {
             toast.error('Failed to delete borrower: ' + err.message);
         } finally {

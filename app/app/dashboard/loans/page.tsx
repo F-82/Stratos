@@ -12,6 +12,7 @@ import { MotionContainer } from "@/components/motion-container";
 import { LoanDetailsDialog } from "@/components/loan-details-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { deleteLoan } from "@/app/actions/delete-records";
 
 interface Loan {
     id: string;
@@ -77,14 +78,15 @@ export default function LoansPage() {
         if (!deleteTarget) return;
         setIsDeleting(true);
         try {
-            // Delete payments and daily_tasks first
-            await supabase.from('payments').delete().eq('loan_id', deleteTarget.id);
-            await supabase.from('daily_tasks').delete().eq('loan_id', deleteTarget.id);
-            const { error } = await supabase.from('loans').delete().eq('id', deleteTarget.id);
-            if (error) throw error;
-            toast.success('Loan deleted successfully.');
-            setDeleteTarget(null);
-            setLoans(prev => prev.filter(l => l.id !== deleteTarget.id));
+            const result = await deleteLoan(deleteTarget.id);
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success('Loan deleted successfully.');
+                setDeleteTarget(null);
+                // Reload list from DB to ensure consistency
+                setLoans(prev => prev.filter(l => l.id !== deleteTarget.id));
+            }
         } catch (err: any) {
             toast.error('Failed to delete loan: ' + err.message);
         } finally {
