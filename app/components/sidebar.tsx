@@ -29,13 +29,21 @@ export function Sidebar() {
         async function getRole() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // Check metadata first
-                if (user.user_metadata?.role) {
+                // Always use profiles table as source of truth 
+                // (user_metadata can be stale/wrong for manually created accounts)
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                if (profile?.role) {
+                    setRole(profile.role);
+                } else if (user.user_metadata?.role) {
+                    // Fallback to metadata if profile fetch returned nothing
                     setRole(user.user_metadata.role);
                 } else {
-                    // Fallback to profiles
-                    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-                    if (data) setRole(data.role);
+                    // If all else fails, show all items safely
+                    setRole('admin');
                 }
             }
             setLoading(false);

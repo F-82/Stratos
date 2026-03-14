@@ -31,11 +31,17 @@ export function MobileNav() {
         async function getRole() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                if (user.user_metadata?.role) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                if (profile?.role) {
+                    setRole(profile.role);
+                } else if (user.user_metadata?.role) {
                     setRole(user.user_metadata.role);
                 } else {
-                    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-                    if (data) setRole(data.role);
+                    setRole('admin');
                 }
             }
         }
