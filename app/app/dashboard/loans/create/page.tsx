@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { addMonths, format } from "date-fns";
+import { addMonths, addWeeks, format } from "date-fns";
 
 interface Borrower {
     id: string;
@@ -23,6 +23,8 @@ interface LoanPlan {
     name: string;
     principal_amount: number;
     installment_amount: number;
+    duration: number;
+    installment_type: string; // 'weekly' | 'monthly'
     duration_months: number;
 }
 
@@ -88,7 +90,10 @@ export default function CreateLoanPage() {
             return;
         }
 
-        const endDate = addMonths(startDate, plan.duration_months);
+        // Compute end date based on installment type
+        const endDate = plan.installment_type === 'weekly'
+            ? addWeeks(startDate, plan.duration)
+            : addMonths(startDate, plan.duration);
 
         const loanData = {
             borrower_id: selectedBorrowerId,
@@ -161,7 +166,7 @@ export default function CreateLoanPage() {
                                         <div className="font-semibold">{plan.name}</div>
                                         <div className="text-2xl font-bold mt-2">LKR {plan.principal_amount.toLocaleString()}</div>
                                         <div className="text-sm text-muted-foreground mt-1">
-                                            {plan.duration_months} Months @ {plan.installment_amount.toLocaleString()}/mo
+                                            {plan.duration} {plan.installment_type === 'weekly' ? 'Weeks' : 'Months'} @ {plan.installment_amount.toLocaleString()}/{plan.installment_type === 'weekly' ? 'wk' : 'mo'}
                                         </div>
                                     </div>
                                 ))}
@@ -182,13 +187,18 @@ export default function CreateLoanPage() {
                                 <div className="pt-2 border-t border-border/50 space-y-2">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Total Payable:</span>
-                                        <span className="font-medium">LKR {(selectedPlan.installment_amount * selectedPlan.duration_months).toLocaleString()}</span>
+                                        <span className="font-medium">LKR {(selectedPlan.installment_amount * selectedPlan.duration).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">End Date:</span>
                                         <span className="font-medium">
                                             {startDate
-                                                ? format(addMonths(startDate, selectedPlan.duration_months), 'MMM d, yyyy')
+                                                ? format(
+                                                    selectedPlan.installment_type === 'weekly'
+                                                        ? addWeeks(startDate, selectedPlan.duration)
+                                                        : addMonths(startDate, selectedPlan.duration),
+                                                    'MMM d, yyyy'
+                                                )
                                                 : '-'
                                             }
                                         </span>
