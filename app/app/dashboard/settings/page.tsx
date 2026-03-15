@@ -44,8 +44,8 @@ interface LoanPlan {
     id: string;
     name: string;
     principal_amount: number;
-    duration_months: number;
-    interest_rate: number;
+    duration: number;
+    installment_type: string;
     installment_amount: number;
 }
 
@@ -68,8 +68,9 @@ export default function SettingsPage() {
     const [newPlan, setNewPlan] = useState({
         name: "",
         principal_amount: "",
-        duration_months: "",
-        interest_rate: ""
+        duration: "",
+        installment_type: "monthly" as "monthly" | "weekly",
+        installment_amount: "",
     });
 
     // Users State
@@ -123,34 +124,30 @@ export default function SettingsPage() {
 
         try {
             const principal = parseFloat(newPlan.principal_amount);
-            const duration = parseInt(newPlan.duration_months);
-            const rate = parseFloat(newPlan.interest_rate);
+            const duration = parseInt(newPlan.duration);
+            const installment = parseFloat(newPlan.installment_amount);
 
-            if (isNaN(principal) || isNaN(duration) || isNaN(rate)) {
+            if (isNaN(principal) || isNaN(duration) || isNaN(installment)) {
                 toast.error("Please enter valid numbers");
                 setIsSubmittingPlan(false);
                 return;
             }
 
-            // Calculation: Simple Interest Flat Rate per Annum
-            // Interest = Principal * (Rate / 100) * (Duration / 12)
-            const interest = principal * (rate / 100) * (duration / 12);
-            const totalAmount = principal + interest;
-            const installment = Math.ceil(totalAmount / duration);
-
             const { error } = await supabase.from('loan_plans').insert([{
                 name: newPlan.name,
                 principal_amount: principal,
-                duration_months: duration,
-                interest_rate: rate,
-                installment_amount: installment
+                duration,
+                duration_months: newPlan.installment_type === 'monthly' ? duration : 0,
+                installment_type: newPlan.installment_type,
+                installment_amount: installment,
+                interest_rate: null,
             }]);
 
             if (error) throw error;
 
             toast.success("Loan plan created successfully");
             setIsAddPlanOpen(false);
-            setNewPlan({ name: "", principal_amount: "", duration_months: "", interest_rate: "" });
+            setNewPlan({ name: "", principal_amount: "", duration: "", installment_type: "monthly", installment_amount: "" });
             fetchPlans();
         } catch (error: any) {
             toast.error(error.message || "Failed to create plan");
@@ -340,6 +337,7 @@ export default function SettingsPage() {
                                     </DialogDescription>
                                 </DialogHeader>
                                 <form onSubmit={handleCreatePlan} className="space-y-4 py-4">
+                                    {/* Plan Name */}
                                     <div className="space-y-2">
                                         <Label htmlFor="name">Plan Name</Label>
                                         <Input
@@ -350,6 +348,37 @@ export default function SettingsPage() {
                                             required
                                         />
                                     </div>
+
+                                    {/* Installment Type Toggle */}
+                                    <div className="space-y-2">
+                                        <Label>Installment Type</Label>
+                                        <div className="flex rounded-lg border border-border overflow-hidden">
+                                            <button
+                                                type="button"
+                                                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                                                    newPlan.installment_type === 'monthly'
+                                                        ? 'bg-medium-blue text-white'
+                                                        : 'bg-background text-muted-foreground hover:bg-secondary'
+                                                }`}
+                                                onClick={() => setNewPlan({ ...newPlan, installment_type: 'monthly' })}
+                                            >
+                                                Monthly
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                                                    newPlan.installment_type === 'weekly'
+                                                        ? 'bg-medium-blue text-white'
+                                                        : 'bg-background text-muted-foreground hover:bg-secondary'
+                                                }`}
+                                                onClick={() => setNewPlan({ ...newPlan, installment_type: 'weekly' })}
+                                            >
+                                                Weekly
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Principal + Duration */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="principal">Principal (Rs.)</Label>
@@ -363,29 +392,68 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="duration">Duration (Months)</Label>
+                                            <Label htmlFor="duration">
+                                                Duration ({newPlan.installment_type === 'weekly' ? 'Weeks' : 'Months'})
+                                            </Label>
                                             <Input
                                                 id="duration"
                                                 type="number"
-                                                placeholder="12"
-                                                value={newPlan.duration_months}
-                                                onChange={(e) => setNewPlan({ ...newPlan, duration_months: e.target.value })}
+                                                placeholder={newPlan.installment_type === 'weekly' ? '8' : '6'}
+                                                value={newPlan.duration}
+                                                onChange={(e) => setNewPlan({ ...newPlan, duration: e.target.value })}
                                                 required
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Installment Amount */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="rate">Flat Interest Rate (%)</Label>
+                                        <Label htmlFor="installment">
+                                            Installment Amount per {newPlan.installment_type === 'weekly' ? 'Week' : 'Month'} (Rs.)
+                                        </Label>
                                         <Input
-                                            id="rate"
+                                            id="installment"
                                             type="number"
-                                            placeholder="20"
-                                            value={newPlan.interest_rate}
-                                            onChange={(e) => setNewPlan({ ...newPlan, interest_rate: e.target.value })}
+                                            placeholder="250"
+                                            value={newPlan.installment_amount}
+                                            onChange={(e) => setNewPlan({ ...newPlan, installment_amount: e.target.value })}
                                             required
                                         />
-                                        <p className="text-xs text-muted-foreground">Used to calculate fixed installment amount.</p>
                                     </div>
+
+                                    {/* Live Preview */}
+                                    {(() => {
+                                        const principal = parseFloat(newPlan.principal_amount) || 0;
+                                        const duration = parseInt(newPlan.duration) || 0;
+                                        const installment = parseFloat(newPlan.installment_amount) || 0;
+                                        const totalRepayment = installment * duration;
+                                        const profit = totalRepayment - principal;
+                                        if (principal > 0 && duration > 0 && installment > 0) {
+                                            return (
+                                                <div className="rounded-xl bg-secondary/60 border border-border p-4 space-y-2">
+                                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</p>
+                                                    <div className="grid grid-cols-3 gap-3 text-center">
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Loan Amount</p>
+                                                            <p className="text-base font-bold text-foreground">Rs. {principal.toLocaleString()}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Total Repayment</p>
+                                                            <p className="text-base font-bold text-foreground">Rs. {totalRepayment.toLocaleString()}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-muted-foreground">Profit</p>
+                                                            <p className={`text-base font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                                Rs. {profit.toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+
                                     <DialogFooter>
                                         <Button type="submit" disabled={isSubmittingPlan}>
                                             {isSubmittingPlan ? "Creating..." : "Create Plan"}
@@ -421,8 +489,10 @@ export default function SettingsPage() {
                                         <TableRow key={plan.id}>
                                             <TableCell className="font-medium">{plan.name}</TableCell>
                                             <TableCell>Rs. {plan.principal_amount.toLocaleString()}</TableCell>
-                                            <TableCell>{plan.duration_months} Months</TableCell>
-                                            <TableCell>Rs. {plan.installment_amount.toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                {plan.duration} {plan.installment_type === 'weekly' ? 'Weeks' : 'Months'}
+                                            </TableCell>
+                                            <TableCell>Rs. {plan.installment_amount.toLocaleString()} / {plan.installment_type === 'weekly' ? 'wk' : 'mo'}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button
                                                     variant="ghost"
