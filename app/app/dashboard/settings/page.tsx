@@ -125,13 +125,17 @@ export default function SettingsPage() {
         try {
             const principal = parseFloat(newPlan.principal_amount);
             const duration = parseInt(newPlan.duration);
-            const installment = parseFloat(newPlan.installment_amount);
+            const interestPerInstallment = parseFloat(newPlan.installment_amount);
 
-            if (isNaN(principal) || isNaN(duration) || isNaN(installment)) {
+            if (isNaN(principal) || isNaN(duration) || isNaN(interestPerInstallment)) {
                 toast.error("Please enter valid numbers");
                 setIsSubmittingPlan(false);
                 return;
             }
+
+            const totalProfit = interestPerInstallment * duration;
+            const totalRepayment = principal + totalProfit;
+            const actualInstallment = totalRepayment / duration;
 
             const { error } = await supabase.from('loan_plans').insert([{
                 name: newPlan.name,
@@ -139,7 +143,7 @@ export default function SettingsPage() {
                 duration,
                 duration_months: newPlan.installment_type === 'monthly' ? duration : 0,
                 installment_type: newPlan.installment_type,
-                installment_amount: installment,
+                installment_amount: actualInstallment,
                 interest_rate: null,
             }]);
 
@@ -409,7 +413,7 @@ export default function SettingsPage() {
                                     {/* Installment Amount */}
                                     <div className="space-y-2">
                                         <Label htmlFor="installment">
-                                            Installment Amount per {newPlan.installment_type === 'weekly' ? 'Week' : 'Month'} (Rs.)
+                                            Interest per {newPlan.installment_type === 'weekly' ? 'Week' : 'Month'} (Rs.)
                                         </Label>
                                         <Input
                                             id="installment"
@@ -419,16 +423,18 @@ export default function SettingsPage() {
                                             onChange={(e) => setNewPlan({ ...newPlan, installment_amount: e.target.value })}
                                             required
                                         />
+                                        <p className="text-xs text-muted-foreground">The extra charge (interest/profit) collected per installment.</p>
                                     </div>
 
                                     {/* Live Preview */}
                                     {(() => {
                                         const principal = parseFloat(newPlan.principal_amount) || 0;
                                         const duration = parseInt(newPlan.duration) || 0;
-                                        const installment = parseFloat(newPlan.installment_amount) || 0;
-                                        const totalRepayment = installment * duration;
-                                        const profit = totalRepayment - principal;
-                                        if (principal > 0 && duration > 0 && installment > 0) {
+                                        const interestPerInstallment = parseFloat(newPlan.installment_amount) || 0;
+                                        const totalProfit = interestPerInstallment * duration;
+                                        const totalRepayment = principal + totalProfit;
+                                        const actualInstallment = duration > 0 ? totalRepayment / duration : 0;
+                                        if (principal > 0 && duration > 0 && interestPerInstallment > 0) {
                                             return (
                                                 <div className="rounded-xl bg-secondary/60 border border-border p-4 space-y-2">
                                                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</p>
@@ -443,11 +449,14 @@ export default function SettingsPage() {
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-muted-foreground">Profit</p>
-                                                            <p className={`text-base font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                                Rs. {profit.toLocaleString()}
+                                                            <p className="text-base font-bold text-emerald-600">
+                                                                Rs. {totalProfit.toLocaleString()}
                                                             </p>
                                                         </div>
                                                     </div>
+                                                    <p className="text-xs text-center text-muted-foreground pt-1">
+                                                        Actual installment: <span className="font-semibold text-foreground">Rs. {actualInstallment.toLocaleString()}</span> / {newPlan.installment_type === 'weekly' ? 'week' : 'month'}
+                                                    </p>
                                                 </div>
                                             );
                                         }
