@@ -161,15 +161,16 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
                                 </div>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                             <div className="bg-background/50 p-2 rounded-lg border border-border/50">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 font-bold">Update Status</p>
                                 <Select value={loan.status} onValueChange={handleStatusUpdate}>
-                                    <SelectTrigger className="h-7 w-[110px] bg-background text-xs uppercase font-bold">
+                                    <SelectTrigger className="h-8 w-full bg-background text-xs uppercase font-bold border-primary/20">
                                         <SelectValue placeholder="Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="active" className="text-xs uppercase">Active</SelectItem>
-                                        <SelectItem value="completed" className="text-xs uppercase">Completed</SelectItem>
-                                        <SelectItem value="defaulted" className="text-xs uppercase">Defaulted</SelectItem>
+                                        <SelectItem value="active" className="text-xs uppercase font-medium text-emerald-600">Active</SelectItem>
+                                        <SelectItem value="completed" className="text-xs uppercase font-medium text-blue-600">Completed</SelectItem>
+                                        <SelectItem value="defaulted" className="text-xs uppercase font-medium text-red-600">Defaulted</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -18,46 +18,63 @@ interface PageProps {
 export default function BorrowerCollectionPage({ params }: PageProps) {
     // Unwrap params using React.use()
     const { id } = use(params);
-
     const [borrower, setBorrower] = useState<any>(null);
     const [loans, setLoans] = useState<any[]>([]);
     const [selectedLoan, setSelectedLoan] = useState<any>(null);
+    const [lastPayment, setLastPayment] = useState<any>(null);
+    const [paidCount, setPaidCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
-    const [lastPayment, setLastPayment] = useState<any>(null); // Stores the payment object after collection
-    const [paidCount, setPaidCount] = useState(0);
 
     const supabase = createClient();
     const router = useRouter();
 
     useEffect(() => {
         async function fetchData() {
-            const { data: bData } = await supabase.from("borrowers").select("*").eq("id", id).single();
-            if (bData) setBorrower(bData);
+            try {
+                const { data: bData } = await supabase.from("borrowers").select("*").eq("id", id).single();
+                if (bData) setBorrower(bData);
 
-            // Fetch loan with duration details
-            const { data: lData } = await supabase
-                .from("loans")
-                .select("*, loan_number, plan:loan_plans(name, installment_amount, duration, installment_type)")
-                .eq("borrower_id", id)
-                .eq("status", "active");
+                // Fetch loan with duration details
+                const { data: lData, error } = await supabase
+                    .from("loans")
+                    .select("*, loan_number, plan:loan_plans(name, installment_amount, duration, installment_type)")
+                    .eq("borrower_id", id)
+                    .eq("status", "active");
 
-            if (lData && lData.length > 0) {
-                const activeLoan = lData[0];
-                setLoans(lData);
-                setSelectedLoan(activeLoan);
+                if (error) {
+                    console.error("Supabase Error fetching loans:", error);
+                    return;
+                }
 
-                // Fetch payments count for this loan to calculate progress
-                const { count } = await supabase
-                    .from("payments")
-                    .select("*", { count: 'exact', head: true })
-                    .eq("loan_id", activeLoan.id);
+                console.log("Loans fetch result for borrower", id, ":", lData);
 
-                setPaidCount(count || 0);
+                if (lData && lData.length > 0) {
+                    const activeLoan = lData[0];
+                    setLoans(lData);
+                    setSelectedLoan(activeLoan);
+
+                    // Fetch payments count for this loan to calculate progress
+                    const { count } = await supabase
+                        .from("payments")
+                        .select("*", { count: 'exact', head: true })
+                        .eq("loan_id", activeLoan.id);
+
+                    setPaidCount(count || 0);
+                } else {
+                    console.warn("No active loans found in DB for borrower:", id);
+                }
+            } catch (err) {
+                console.error("Unexpected fetch error:", err);
             }
         }
         fetchData();
-    }, [id]);
+    }, [id, supabase]);
+
+    const handleRefresh = () => {
+        setLoading(true);
+        window.location.reload();
+    };
 
     const handlePayment = async () => {
         if (!selectedLoan) return;
@@ -152,7 +169,12 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
         doc.save(`receipt_${lastPayment.id.slice(0, 6)}.pdf`);
     };
 
-    if (!borrower) return <div className="p-4">Loading borrower...</div>;
+    if (!borrower) return <div className="p-4 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-2">
+            <RefreshCcw className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground animate-pulse">Loading borrower...</p>
+        </div>
+    </div>;
 
     // --- Visualization Logic ---
     const totalSegments = selectedLoan?.plan?.duration || 3;
@@ -173,11 +195,6 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
     let isOverdue = false;
 
     if (selectedLoan && selectedLoan.start_date) {
-        // Calculate the due date for the *next* installment (paidCount + 1)
-        // Assuming monthly for now. 
-        // Example: Start Jan 1. 
-        // 0 Paid -> Due Feb 1 (Start + 1 month)
-        // 1 Paid -> Due Mar 1 (Start + 2 months)
         const nextInstallmentNum = paidCount + 1;
         const startDate = new Date(selectedLoan.start_date);
 
@@ -211,9 +228,14 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             </div>
 
             {!loans.length ? (
-                <Card>
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                        No active loans found for this borrower.
+                <Card className="border-dashed border-2">
+                    <CardContent className="p-12 text-center flex flex-col items-center justify-center">
+                        <CreditCard className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                        <p className="text-muted-foreground font-medium text-lg">No active loans found.</p>
+                        <p className="text-xs text-muted-foreground mb-6">If you just updated the status, click refresh below.</p>
+                        <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2 shadow-sm">
+                            <RefreshCcw className="h-4 w-4" /> Force Refresh
+                        </Button>
                     </CardContent>
                 </Card>
             ) : (
@@ -291,7 +313,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
 
                     {/* Hide Next Installment card if loan is fully paid */}
                     {paidCount < totalSegments && (
-                        <Card className="bg-primary/5 border-primary/20">
+                        <Card className="bg-primary/5 border-primary/20 shadow-sm">
                             <CardHeader className="pb-2 text-center">
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
                                     Next Installment (#{paidCount + 1})
@@ -305,16 +327,16 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                         </Card>
                     )}
 
-                    <Card>
+                    <Card className="shadow-smooth border-border/50">
                         <CardContent className="pt-6">
                             {successMsg ? (
                                 <div className="text-center space-y-4">
-                                    <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                                    <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
                                         <span className="h-8 w-8 font-bold flex items-center justify-center text-2xl">✓</span>
                                     </div>
                                     <h3 className="text-lg font-medium text-green-700">{successMsg}</h3>
                                     <div className="flex flex-col gap-2">
-                                        <Button onClick={generateReceipt} variant="outline" className="w-full gap-2">
+                                        <Button onClick={generateReceipt} variant="outline" className="w-full gap-2 shadow-sm">
                                             <Printer className="h-4 w-4" /> Download Receipt
                                         </Button>
 
@@ -336,7 +358,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                                 // SMART BUTTON (No Input Field)
                                 <Button
                                     onClick={handlePayment}
-                                    className="w-full h-16 text-lg font-semibold shadow-lg shadow-primary/20"
+                                    className="w-full h-16 text-lg font-semibold shadow-lg shadow-primary/20 transition-smooth hover:scale-[1.02] active:scale-[0.98]"
                                     size="lg"
                                     disabled={loading || paidCount >= totalSegments}
                                 >
