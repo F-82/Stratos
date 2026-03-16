@@ -13,9 +13,10 @@ import { toast } from "sonner";
 
 interface LoanDetailsDialogProps {
     loanId: string;
+    onUpdate?: () => void;
 }
 
-export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
+export function LoanDetailsDialog({ loanId, onUpdate }: LoanDetailsDialogProps) {
     const [loan, setLoan] = useState<any>(null);
     const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -89,6 +90,7 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
             
             setLoan({ ...loan, status: newStatus });
             toast.success(`Loan status updated to ${newStatus}`);
+            if (onUpdate) onUpdate();
         } catch (err: any) {
             console.error("Error updating status:", err);
             toast.error("Failed to update status");
@@ -174,13 +176,17 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            </div>
                         </div>
 
                         {/* Schedule List */}
                         <div className="flex-1 overflow-hidden flex flex-col">
-                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                <Calendar className="h-4 w-4" /> Repayment Schedule
-                            </h3>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-semibold flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" /> Repayment Schedule
+                                </h3>
+                                <p className="text-[10px] text-muted-foreground italic">Pending installments will be collected by agents</p>
+                            </div>
                             <div className="border rounded-xl overflow-hidden shadow-sm flex-1">
                                 <div className="grid grid-cols-5 p-3 bg-secondary/50 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50">
                                     <div>Inst. #</div>

@@ -34,30 +34,30 @@ export default function LoansPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const supabase = createClient();
 
-    useEffect(() => {
-        async function fetchLoans() {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from("loans")
-                .select(`
-          id,
-          loan_number,
-          principal_amount,
-          status,
-          start_date,
-          end_date,
-          borrower:borrowers(full_name),
-          plan:loan_plans(name)
-        `)
-                .order("created_at", { ascending: false });
+    const fetchData = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from("loans")
+            .select(`
+                id,
+                loan_number,
+                principal_amount,
+                status,
+                start_date,
+                end_date,
+                borrower:borrowers(full_name),
+                plan:loan_plans(name)
+            `)
+            .order("created_at", { ascending: false });
 
-            if (data) {
-                setLoans(data as any);
-            }
-            setLoading(false);
+        if (data) {
+            setLoans(data as any);
         }
+        setLoading(false);
+    };
 
-        fetchLoans();
+    useEffect(() => {
+        fetchData();
     }, []);
 
     // Filter Logic
@@ -277,7 +277,7 @@ export default function LoansPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <LoanDetailsDialog loanId={loan.id} />
+                                            <LoanDetailsDialog loanId={loan.id} onUpdate={fetchData} />
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
