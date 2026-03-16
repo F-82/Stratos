@@ -4,12 +4,12 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Printer, RefreshCcw, CreditCard } from "lucide-react";
+import { ArrowLeft, Printer, RefreshCcw, CreditCard, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { addMonths, addWeeks } from "date-fns";
+import { addDays, addMonths, addWeeks, format, isAfter, isBefore } from "date-fns";
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -22,7 +22,9 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
     const [loans, setLoans] = useState<any[]>([]);
     const [selectedLoan, setSelectedLoan] = useState<any>(null);
     const [lastPayment, setLastPayment] = useState<any>(null);
+    const [allPayments, setAllPayments] = useState<any[]>([]);
     const [paidCount, setPaidCount] = useState(0);
+    const [targetInstallment, setTargetInstallment] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -47,22 +49,25 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                     return;
                 }
 
-                console.log("Loans fetch result for borrower", id, ":", lData);
-
                 if (lData && lData.length > 0) {
                     const activeLoan = lData[0];
                     setLoans(lData);
                     setSelectedLoan(activeLoan);
 
-                    // Fetch payments count for this loan to calculate progress
-                    const { count } = await supabase
+                    // Fetch all payments for this loan
+                    const { data: pData } = await supabase
                         .from("payments")
-                        .select("*", { count: 'exact', head: true })
+                        .select("*")
                         .eq("loan_id", activeLoan.id);
 
-                    setPaidCount(count || 0);
-                } else {
-                    console.warn("No active loans found in DB for borrower:", id);
+                    setAllPayments(pData || []);
+                    setPaidCount(pData?.length || 0);
+
+                    // Auto-select the first unpaid installment 
+                    const firstUnpaid = (pData?.length || 0) + 1;
+                    if (firstUnpaid <= activeLoan.plan.duration) {
+                        setTargetInstallment(firstUnpaid);
+                    }
                 }
             } catch (err) {
                 console.error("Unexpected fetch error:", err);
@@ -77,31 +82,38 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
     };
 
     const handlePayment = async () => {
-        if (!selectedLoan) return;
+        if (!selectedLoan || !targetInstallment) return;
 
         setLoading(true);
 
         const { data: { user } } = await supabase.auth.getUser();
         const installmentAmount = selectedLoan.plan.installment_amount;
-        // The installment we are collecting now is the next one
-        const currentInstallmentNumber = paidCount + 1;
-
+        
         const { data, error } = await supabase.from("payments").insert([{
             loan_id: selectedLoan.id,
             collector_id: user?.id,
             amount: installmentAmount,
-            installment_number: currentInstallmentNumber,
+            installment_number: targetInstallment,
             notes: "Mobile collection"
         }]).select().single();
 
         if (error) {
             alert("Error: " + error.message);
         } else {
-            setSuccessMsg(`Collected Installment #${currentInstallmentNumber} successfully!`);
+            setSuccessMsg(`Collected Installment #${targetInstallment} successfully!`);
             setLastPayment(data);
-            setPaidCount(prev => prev + 1); // Increment locally to update UI
+            setAllPayments(prev => [...prev, data]);
+            setPaidCount(prev => prev + 1);
 
-            // Auto-mark today's task as completed (if one exists)
+            // Move target to next unpaid if available
+            const nextTarget = targetInstallment + 1;
+            if (nextTarget <= selectedLoan.plan.duration) {
+                setTargetInstallment(nextTarget);
+            } else {
+                setTargetInstallment(null);
+            }
+
+            // Auto-mark today's task as completed
             const todayStr = new Date().toISOString().split("T")[0];
             await supabase
                 .from("daily_tasks")
@@ -113,18 +125,12 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
 
             // Check if this was the last payment
             const totalSegments = selectedLoan.plan.duration;
-            if (totalSegments > 0 && currentInstallmentNumber >= totalSegments) {
-                const { error: updateError } = await supabase
+            if (totalSegments > 0 && (paidCount + 1) >= totalSegments) {
+                await supabase
                     .from("loans")
                     .update({ status: "completed" })
                     .eq("id", selectedLoan.id);
-
-                if (updateError) {
-                    console.error("Failed to update loan status:", updateError);
-                    alert("Payment collected, but failed to mark loan as completed. Please contact admin.");
-                } else {
-                    setSuccessMsg(`LOAN FULLY REPAID! Collected final installment #${currentInstallmentNumber}.`);
-                }
+                setSuccessMsg(`LOAN FULLY REPAID! Collected final installment.`);
             }
         }
         setLoading(false);
@@ -132,13 +138,10 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
 
     const generateReceipt = () => {
         if (!lastPayment || !borrower) return;
-
         const doc = new jsPDF();
-
         doc.setFont("helvetica", "bold");
         doc.setFontSize(22);
         doc.text("STRATOS MFI", 105, 20, { align: "center" });
-
         doc.setFontSize(12);
         doc.setFont("helvetica", "normal");
         doc.text("Payment Receipt", 105, 30, { align: "center" });
@@ -165,56 +168,22 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
         doc.setFontSize(10);
         doc.text("Thank you for your payment.", 105, 120, { align: "center" });
         doc.text("System Generated Receipt", 105, 125, { align: "center" });
-
         doc.save(`receipt_${lastPayment.id.slice(0, 6)}.pdf`);
     };
 
-    if (!borrower) return <div className="p-4 flex items-center justify-center min-h-[50vh]">
-        <div className="flex flex-col items-center gap-2">
-            <RefreshCcw className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground animate-pulse">Loading borrower...</p>
+    if (!borrower) return (
+        <div className="p-4 flex items-center justify-center min-h-[50vh]">
+            <div className="flex flex-col items-center gap-2">
+                <RefreshCcw className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground animate-pulse">Loading borrower...</p>
+            </div>
         </div>
-    </div>;
+    );
 
-    // --- Visualization Logic ---
-    const totalSegments = selectedLoan?.plan?.duration || 3;
-    // Calculate percentage based on paid count
-    const progressPercentage = (paidCount / totalSegments) * 100;
-
-    // SVG Geometry
-    const size = 220;
-    const center = size / 2;
-    const radius = 85;
-    const strokeWidth = 20;
-    const circumference = 2 * Math.PI * radius;
-    // Calculate strokeDashoffset: full circumference minus the length of the filled part
-    const strokeDashoffset = circumference - ((progressPercentage / 100) * circumference);
-
-    // Date Logic
-    let nextDueDate: Date | null = null;
-    let isOverdue = false;
-
-    if (selectedLoan && selectedLoan.start_date) {
-        const nextInstallmentNum = paidCount + 1;
-        const startDate = new Date(selectedLoan.start_date);
-
-        nextDueDate = selectedLoan.plan.installment_type === 'weekly' 
-            ? addWeeks(startDate, nextInstallmentNum) 
-            : addMonths(startDate, nextInstallmentNum);
-
-        const today = new Date();
-        // Reset time parts for accurate date comparison
-        today.setHours(0, 0, 0, 0);
-        const due = new Date(nextDueDate);
-        due.setHours(0, 0, 0, 0);
-
-        if (today > due) {
-            isOverdue = true;
-        }
-    }
+    const totalSegments = selectedLoan?.plan?.duration || 0;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-10">
             <div className="flex items-center gap-4">
                 <Link href="/collector">
                     <Button variant="ghost" size="icon">
@@ -227,153 +196,152 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {!loans.length ? (
+            {!selectedLoan ? (
                 <Card className="border-dashed border-2">
                     <CardContent className="p-12 text-center flex flex-col items-center justify-center">
                         <CreditCard className="h-12 w-12 text-muted-foreground/30 mb-4" />
                         <p className="text-muted-foreground font-medium text-lg">No active loans found.</p>
-                        <p className="text-xs text-muted-foreground mb-6">If you just updated the status, click refresh below.</p>
-                        <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2 shadow-sm">
+                        <Button variant="outline" size="sm" onClick={handleRefresh} className="mt-4 gap-2">
                             <RefreshCcw className="h-4 w-4" /> Force Refresh
                         </Button>
                     </CardContent>
                 </Card>
             ) : (
-                <>
-                    {/* Progress Visualization */}
-                    <div className="flex justify-center py-6">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="relative flex items-center justify-center">
-                                {/* Rotated so it starts at top (-90deg) */}
-                                <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                                    {/* Background Ring (Grey) */}
-                                    <circle
-                                        cx={center}
-                                        cy={center}
-                                        r={radius}
-                                        fill="transparent"
-                                        stroke="var(--secondary)" // Use theme variable
-                                        strokeWidth={strokeWidth}
-                                    />
-                                    {/* Progress Ring */}
-                                    <circle
-                                        cx={center}
-                                        cy={center}
-                                        r={radius}
-                                        fill="transparent"
-                                        stroke={isOverdue ? "#ef4444" : "var(--primary)"}
-                                        strokeWidth={strokeWidth}
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={strokeDashoffset}
-                                        strokeLinecap="butt"
-                                        className="transition-all duration-1000 ease-out"
-                                    />
-                                    {/* Separator Lines (to create segments) */}
-                                    {Array.from({ length: totalSegments }).map((_, i) => {
-                                        const angle = (i * 360) / totalSegments;
-                                        const rad = (angle * Math.PI) / 180;
-                                        const x1 = center + (radius - strokeWidth / 2 - 2) * Math.cos(rad);
-                                        const y1 = center + (radius - strokeWidth / 2 - 2) * Math.sin(rad);
-                                        const x2 = center + (radius + strokeWidth / 2 + 2) * Math.cos(rad);
-                                        const y2 = center + (radius + strokeWidth / 2 + 2) * Math.sin(rad);
+                <div className="space-y-6">
+                    {/* Installment Grid */}
+                    <Card className="border-border/50 shadow-sm overflow-hidden">
+                        <CardHeader className="bg-secondary/20 pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    Repayment Progress
+                                </CardTitle>
+                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                    {paidCount} / {totalSegments}
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-5 gap-3">
+                                {Array.from({ length: totalSegments }).map((_, i) => {
+                                    const instNum = i + 1;
+                                    const payment = allPayments.find(p => p.installment_number === instNum);
+                                    const isPaid = !!payment;
+                                    
+                                    const startDate = new Date(selectedLoan.start_date);
+                                    const dueDate = selectedLoan.plan.installment_type === 'weekly' 
+                                        ? addWeeks(startDate, instNum) 
+                                        : addMonths(startDate, instNum);
+                                    
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const due = new Date(dueDate);
+                                    due.setHours(0, 0, 0, 0);
+                                    
+                                    const isLate = isBefore(due, today);
+                                    const isSeverelyOverdue = isAfter(today, addDays(due, 3)) && !isPaid;
+                                    
+                                    let bgColor = "bg-secondary/40 border-secondary";
+                                    let textColor = "text-muted-foreground";
+                                    
+                                    if (isPaid) {
+                                        bgColor = "bg-emerald-500 border-emerald-600 grayscale-[0.2]";
+                                        textColor = "text-white";
+                                    } else if (isSeverelyOverdue) {
+                                        bgColor = "bg-red-500 border-red-600 animate-pulse-subtle";
+                                        textColor = "text-white";
+                                    } else if (!isPaid && (isLate || isBefore(due, addDays(today, 1)))) {
+                                        bgColor = "bg-amber-400 border-amber-500";
+                                        textColor = "text-amber-950";
+                                    }
 
-                                        return (
-                                            <line
-                                                key={i}
-                                                x1={x1}
-                                                y1={y1}
-                                                x2={x2}
-                                                y2={y2}
-                                                stroke="var(--background)"
-                                                strokeWidth="3"
-                                            />
-                                        );
-                                    })}
-                                </svg>
-                                {/* Inner Text (Center) */}
-                                <div className="absolute flex flex-col items-center">
-                                    <span className={`text-4xl font-bold ${isOverdue ? 'text-red-500' : ''}`}>{paidCount}</span>
-                                    <span className="text-xs text-muted-foreground uppercase tracking-wider">of {totalSegments} Paid</span>
-                                </div>
+                                    const isSelected = targetInstallment === instNum;
+
+                                    return (
+                                        <button
+                                            key={instNum}
+                                            disabled={isPaid}
+                                            onClick={() => setTargetInstallment(instNum)}
+                                            className={`
+                                                relative flex flex-col items-center justify-center aspect-square rounded-xl border-2 text-[10px] font-bold transition-all active:scale-95
+                                                ${bgColor} ${textColor}
+                                                ${isSelected ? "ring-2 ring-primary ring-offset-2 scale-110 z-10 shadow-lg" : "hover:scale-105"}
+                                                ${isPaid ? "cursor-default opacity-80" : "cursor-pointer shadow-sm"}
+                                            `}
+                                        >
+                                            <span>{format(due, "dd/MM")}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
-                            {/* Due Date Warning */}
-                            {paidCount < totalSegments && (
-                                <div className={`flex flex-col items-center px-4 py-2 rounded-lg ${isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-primary/5 text-primary border border-primary/10'}`}>
-                                    <span className="text-xs font-semibold uppercase tracking-wider mb-0.5">
-                                        {isOverdue ? "Overdue" : "Next Due"}
-                                    </span>
-                                    <span className="font-bold">
-                                        {nextDueDate ? nextDueDate.toLocaleDateString() : 'N/A'}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Hide Next Installment card if loan is fully paid */}
-                    {paidCount < totalSegments && (
-                        <Card className="bg-primary/5 border-primary/20 shadow-sm">
-                            <CardHeader className="pb-2 text-center">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
-                                    Next Installment (#{paidCount + 1})
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="text-center">
-                                <div className="text-4xl font-bold text-primary">
-                                    LKR {selectedLoan.plan?.installment_amount.toLocaleString()}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    <Card className="shadow-smooth border-border/50">
-                        <CardContent className="pt-6">
-                            {successMsg ? (
-                                <div className="text-center space-y-4">
-                                    <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
-                                        <span className="h-8 w-8 font-bold flex items-center justify-center text-2xl">✓</span>
-                                    </div>
-                                    <h3 className="text-lg font-medium text-green-700">{successMsg}</h3>
-                                    <div className="flex flex-col gap-2">
-                                        <Button onClick={generateReceipt} variant="outline" className="w-full gap-2 shadow-sm">
-                                            <Printer className="h-4 w-4" /> Download Receipt
-                                        </Button>
-
-                                        {/* Only show "Collect Another" if loan is NOT finished */}
-                                        {paidCount < totalSegments ? (
-                                            <Button onClick={() => setSuccessMsg(null)} variant="ghost" className="w-full gap-2">
-                                                <RefreshCcw className="h-4 w-4" /> Collect Another
-                                            </Button>
-                                        ) : (
-                                            <Link href="/collector" className="w-full">
-                                                <Button variant="default" className="w-full gap-2">
-                                                    <ArrowLeft className="h-4 w-4" /> Return to List
-                                                </Button>
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                // SMART BUTTON (No Input Field)
-                                <Button
-                                    onClick={handlePayment}
-                                    className="w-full h-16 text-lg font-semibold shadow-lg shadow-primary/20 transition-smooth hover:scale-[1.02] active:scale-[0.98]"
-                                    size="lg"
-                                    disabled={loading || paidCount >= totalSegments}
-                                >
-                                    {loading ? (
-                                        "Processing..."
-                                    ) : paidCount >= totalSegments ? (
-                                        "Loan Fully Repaid"
-                                    ) : (
-                                        `Collect LKR ${selectedLoan.plan?.installment_amount.toLocaleString()}`
-                                    )}
-                                </Button>
-                            )}
+                            <div className="flex gap-4 justify-center mt-6 text-[9px] uppercase font-bold opacity-50 tracking-tighter">
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 bg-emerald-500 rounded-px"/> Paid</div>
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 bg-amber-400 rounded-px"/> Due/Soon</div>
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 bg-red-500 rounded-px"/> Overdue</div>
+                            </div>
                         </CardContent>
                     </Card>
-                </>
+
+                    {/* Collection UI */}
+                    <div className="space-y-4">
+                        {successMsg ? (
+                            <Card className="border-emerald-200 bg-emerald-50/50">
+                                <CardContent className="pt-6 text-center space-y-4">
+                                    <div className="h-12 w-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
+                                    <h3 className="text-emerald-800 font-bold">{successMsg}</h3>
+                                    <div className="flex flex-col gap-2">
+                                        <Button onClick={generateReceipt} variant="outline" className="w-full gap-2 bg-white">
+                                            <Printer className="h-4 w-4" /> Receipt
+                                        </Button>
+                                        {paidCount < totalSegments && (
+                                            <Button onClick={() => setSuccessMsg(null)} variant="ghost" className="w-full">
+                                                Collect Another
+                                            </Button>
+                                        )}
+                                        <Link href="/collector" className="w-full">
+                                            <Button variant="secondary" className="w-full">Back to List</Button>
+                                        </Link>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : targetInstallment ? (
+                            <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
+                                <Card className="bg-primary/5 border-primary/20 shadow-sm border-2">
+                                    <CardHeader className="pb-2 text-center">
+                                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                                            Installment #{targetInstallment}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="text-center space-y-1">
+                                        <div className="text-4xl font-black text-primary tracking-tight">
+                                            LKR {selectedLoan.plan?.installment_amount.toLocaleString()}
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                                            Due {format(selectedLoan.plan.installment_type === 'weekly' 
+                                                ? addWeeks(new Date(selectedLoan.start_date), targetInstallment) 
+                                                : addMonths(new Date(selectedLoan.start_date), targetInstallment), 'MMMM do')}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                                <Button
+                                    onClick={handlePayment}
+                                    className="w-full h-16 text-lg font-black uppercase tracking-widest shadow-xl shadow-primary/30 transition-all hover:translate-y-[-2px] active:translate-y-[1px]"
+                                    disabled={loading}
+                                >
+                                    {loading ? "Processing..." : `Confirm Payment`}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="text-center p-8 bg-secondary/20 rounded-2xl border-2 border-dashed border-secondary">
+                                <h3 className="font-bold text-muted-foreground">LOAN FULLY PAID</h3>
+                                <Link href="/collector" className="mt-4 block">
+                                    <Button variant="outline">Back to Borrowers</Button>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
