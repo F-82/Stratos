@@ -96,7 +96,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
 
             // Check if this was the last payment
             const totalSegments = selectedLoan.plan.duration;
-            if (currentInstallmentNumber >= totalSegments) {
+            if (totalSegments > 0 && currentInstallmentNumber >= totalSegments) {
                 const { error: updateError } = await supabase
                     .from("loans")
                     .update({ status: "completed" })

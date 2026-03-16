@@ -8,6 +8,8 @@ import { createClient } from "@/utils/supabase/client";
 import { Eye, User, Calendar, DollarSign, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addMonths, addWeeks, format, isAfter, isBefore } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface LoanDetailsDialogProps {
     loanId: string;
@@ -76,12 +78,28 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
         fetchDetails();
     }, [isOpen, loanId, supabase]);
 
+    const handleStatusUpdate = async (newStatus: string) => {
+        try {
+            const { error } = await supabase
+                .from("loans")
+                .update({ status: newStatus })
+                .eq("id", loanId);
+
+            if (error) throw error;
+            
+            setLoan({ ...loan, status: newStatus });
+            toast.success(`Loan status updated to ${newStatus}`);
+        } catch (err: any) {
+            console.error("Error updating status:", err);
+            toast.error("Failed to update status");
+        }
+    };
+
     // Construct Schedule
     const schedule = [];
     if (loan) {
         const startDate = new Date(loan.start_date);
         const duration = loan.plan.duration;
-        const totalPaid = payments.length;
 
         for (let i = 1; i <= duration; i++) {
             const dueDate = loan.plan.installment_type === 'weekly' 
@@ -144,9 +162,16 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
                             </div>
                             <div>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Status</p>
-                                <Badge variant={loan.status === 'active' ? 'default' : 'secondary'} className="uppercase">
-                                    {loan.status}
-                                </Badge>
+                                <Select value={loan.status} onValueChange={handleStatusUpdate}>
+                                    <SelectTrigger className="h-7 w-[110px] bg-background text-xs uppercase font-bold">
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active" className="text-xs uppercase">Active</SelectItem>
+                                        <SelectItem value="completed" className="text-xs uppercase">Completed</SelectItem>
+                                        <SelectItem value="defaulted" className="text-xs uppercase">Defaulted</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
