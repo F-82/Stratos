@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { addMonths, addWeeks } from "date-fns";
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -37,7 +38,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
             // Fetch loan with duration details
             const { data: lData } = await supabase
                 .from("loans")
-                .select("*, loan_number, plan:loan_plans(name, installment_amount, duration_months)")
+                .select("*, loan_number, plan:loan_plans(name, installment_amount, duration, installment_type)")
                 .eq("borrower_id", id)
                 .eq("status", "active");
 
@@ -94,7 +95,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
                 .eq("status", "pending");
 
             // Check if this was the last payment
-            const totalSegments = selectedLoan.plan.duration_months;
+            const totalSegments = selectedLoan.plan.duration;
             if (currentInstallmentNumber >= totalSegments) {
                 const { error: updateError } = await supabase
                     .from("loans")
@@ -154,7 +155,7 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
     if (!borrower) return <div className="p-4">Loading borrower...</div>;
 
     // --- Visualization Logic ---
-    const totalSegments = selectedLoan?.plan?.duration_months || 12;
+    const totalSegments = selectedLoan?.plan?.duration || 3;
     // Calculate percentage based on paid count
     const progressPercentage = (paidCount / totalSegments) * 100;
 
@@ -180,9 +181,9 @@ export default function BorrowerCollectionPage({ params }: PageProps) {
         const nextInstallmentNum = paidCount + 1;
         const startDate = new Date(selectedLoan.start_date);
 
-        // Simple month addition
-        nextDueDate = new Date(startDate);
-        nextDueDate.setMonth(startDate.getMonth() + nextInstallmentNum);
+        nextDueDate = selectedLoan.plan.installment_type === 'weekly' 
+            ? addWeeks(startDate, nextInstallmentNum) 
+            : addMonths(startDate, nextInstallmentNum);
 
         const today = new Date();
         // Reset time parts for accurate date comparison

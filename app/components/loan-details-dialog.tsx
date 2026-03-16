@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/utils/supabase/client";
 import { Eye, User, Calendar, DollarSign, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
-import { addMonths, format, isAfter, isBefore } from "date-fns";
+import { addMonths, addWeeks, format, isAfter, isBefore } from "date-fns";
 
 interface LoanDetailsDialogProps {
     loanId: string;
@@ -34,7 +34,7 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
                         borrower:borrowers (
                             id, full_name, nic_number, address, collector_id
                         ),
-                        plan:loan_plans (name, duration_months, installment_amount)
+                        plan:loan_plans (name, duration, installment_type, installment_amount)
                     `)
                     .eq("id", loanId)
                     .single();
@@ -80,11 +80,13 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
     const schedule = [];
     if (loan) {
         const startDate = new Date(loan.start_date);
-        const duration = loan.plan.duration_months;
+        const duration = loan.plan.duration;
         const totalPaid = payments.length;
 
         for (let i = 1; i <= duration; i++) {
-            const dueDate = addMonths(startDate, i);
+            const dueDate = loan.plan.installment_type === 'weekly' 
+                ? addWeeks(startDate, i) 
+                : addMonths(startDate, i);
             const payment = payments.find(p => p.installment_number === i);
             const isPaid = !!payment;
             const isLate = !isPaid && isAfter(new Date(), dueDate); // Due date passed and not paid
@@ -137,7 +139,7 @@ export function LoanDetailsDialog({ loanId }: LoanDetailsDialogProps) {
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Progress</p>
                                 <div className="font-semibold flex items-center gap-2">
                                     <span className="text-lg">{payments.length}</span>
-                                    <span className="text-sm text-muted-foreground">/ {loan.plan.duration_months} Paid</span>
+                                    <span className="text-sm text-muted-foreground">/ {loan.plan.duration} Paid</span>
                                 </div>
                             </div>
                             <div>
